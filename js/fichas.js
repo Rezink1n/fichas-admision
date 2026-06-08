@@ -51,7 +51,8 @@ function renderBuscarResult(f, el) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
           ${(()=>{
             const snap = f.producto_snapshot ? JSON.parse(f.producto_snapshot) : null;
-            const pNombre = f.productos?.nombre || snap?.nombre || '—';
+            // Priorizar snapshot: inmutable desde la emisión
+            const pNombre = (f.estado !== 'emitida' && snap?.nombre) ? snap.nombre : (f.productos?.nombre || snap?.nombre || '—');
             return `<div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Valor</div>
             <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--accent)">${f.valor}€</div></div>
           <div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Producto</div>
@@ -181,7 +182,7 @@ async function usarFicha(uid) {
 // ══════════════════════════════════════════════════════════
 //  BASE DE DATOS
 // ══════════════════════════════════════════════════════════
-let allFichas = [], currentFilter = 'all';
+let allFichas = [], currentFilter = 'all', currentEstFilter = 'all';
 
 async function reloadFichas() {
   document.getElementById('fichas-list').innerHTML = '<div class="loader"><div class="spin"></div> Cargando…</div>';
@@ -207,7 +208,12 @@ function updateStats() {
 
 function setFilter(f, btn) {
   currentFilter = f;
-  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.fbtn:not(.fbtn-est)').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderFichas();
+}
+function setEstFilter(estId, btn) {
+  currentEstFilter = estId;
+  document.querySelectorAll('.fbtn-est').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); renderFichas();
 }
 
@@ -216,7 +222,7 @@ function fichaCardHTML(f) {
     <div class="fcard-ico">${ICONS[f.estado]||'🪙'}</div>
     <div class="fcard-info">
       <div class="fcard-uid">${f.uid}</div>
-      <div class="fcard-meta">${f.productos?.nombre||'—'} · ${f.establecimientos?.nombre||(f.est_snapshot?JSON.parse(f.est_snapshot).nombre:'')||''} · ${fmtDate(f.created_at)}</div>
+      <div class="fcard-meta">${(f.estado!=='emitida'&&f.producto_snapshot)?JSON.parse(f.producto_snapshot).nombre:(f.productos?.nombre||'—')} · ${f.establecimientos?.nombre||(f.est_snapshot?JSON.parse(f.est_snapshot).nombre:'')||''} · ${fmtDate(f.created_at)}</div>
     </div>
     <div class="fcard-right">
       <div class="fcard-val">${f.valor}€</div>
@@ -229,6 +235,7 @@ function renderFichas() {
   const q = (document.getElementById('fichas-search')?.value||'').toLowerCase();
   let list = allFichas;
   if (currentFilter !== 'all') list = list.filter(f=>f.estado===currentFilter);
+  if (currentEstFilter !== 'all') list = list.filter(f=>f.establecimiento_id===currentEstFilter || (!f.establecimiento_id && currentEstFilter==='__sin__'));
   if (q) list = list.filter(f=>f.uid.toLowerCase().includes(q));
   if (!list.length) { document.getElementById('fichas-list').innerHTML='<div class="empty">Sin fichas</div>'; return; }
 
@@ -265,7 +272,7 @@ function showDetail(uid) {
     <span class="badge b-${f.estado}" style="margin-bottom:14px;display:inline-block">${f.estado.toUpperCase()}</span>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
       <div><div style="font-size:9px;color:var(--muted);margin-bottom:3px">VALOR</div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--accent)">${f.valor}€</div></div>
-      <div><div style="font-size:9px;color:var(--muted);margin-bottom:3px">PRODUCTO</div><div style="font-size:12px">${f.productos?.nombre||'—'}</div></div>
+      <div><div style="font-size:9px;color:var(--muted);margin-bottom:3px">PRODUCTO</div><div style="font-size:12px">${(f.estado!=='emitida'&&f.producto_snapshot)?JSON.parse(f.producto_snapshot).nombre:(f.productos?.nombre||'—')}</div></div>
       <div style="grid-column:span 2"><div style="font-size:9px;color:var(--muted);margin-bottom:3px">ESTABLECIMIENTO</div>
         <div style="font-size:12px;font-weight:600">${(()=>{const s=f.est_snapshot?JSON.parse(f.est_snapshot):{};return f.establecimientos?.nombre||s.nombre||'—';})()}${f.est_snapshot?' <span style="font-size:9px;color:var(--muted)">(archivo)</span>':''}</div>
         ${(()=>{const d=f.establecimientos?.direccion||(f.est_snapshot?JSON.parse(f.est_snapshot).direccion:'');return d?`<div style="font-size:11px;color:var(--muted);margin-top:1px">📍 ${d}</div>`:''})()}

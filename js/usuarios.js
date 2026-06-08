@@ -37,9 +37,10 @@ async function loadAdmins() {
     };
 
     if (isSuperAdmin()) {
-      // Agrupar por establecimiento
+      const filtEst = document.getElementById('user-est-filter')?.value || 'all';
+      const filtRows = filtEst === 'all' ? rows : rows.filter(a => a.establecimiento_id === filtEst || (!a.establecimiento_id && filtEst === '__sin__'));
       const grupos = {};
-      rows.forEach(a => {
+      filtRows.forEach(a => {
         const key = a.establecimiento_id || '__sin__';
         const nom = a.establecimientos?.nombre || 'Sin establecimiento';
         if (!grupos[key]) grupos[key] = {nombre: nom, users: []};

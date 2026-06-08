@@ -34,6 +34,18 @@ async function loadEstablecimientos() {
     // Rellenar select de establecimientos en form de usuario
     const sel = document.getElementById('u-est');
     if (sel) sel.innerHTML = _todosEsts.map(e=>`<option value="${e.id}">${e.nombre}</option>`).join('');
+    // Rellenar selects de filtro (solo visibles para superadmin)
+    const opts = '<option value="all">🏪 Todos los establecimientos</option>' +
+      _todosEsts.map(e=>`<option value="${e.id}">${e.nombre}</option>`).join('');
+    ['fichas-est-select','prod-est-filter','user-est-filter'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = opts;
+    });
+    // Mostrar filas de filtro solo para superadmin
+    ['fichas-est-filter-row','prod-est-filter-row','user-est-filter-row'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = isSuperAdmin() ? '' : 'none';
+    });
   } catch(e) { el.innerHTML=`<div style="color:var(--danger);font-size:12px">Error: ${e.message}</div>`; }
 }
 

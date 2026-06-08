@@ -43,7 +43,7 @@
     <div class="err-msg" id="l-err"></div>
     <button class="btn btn-primary btn-block" id="l-btn" onclick="submitLogin()">Entrar</button>
     <div style="text-align:center">
-      <button onclick="showSetup()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px">Primera vez · Configurar conexión</button>
+      <!-- setup solo via URL secreta: ?setup=fichas-setup-2024 -->
     </div>
   </div>
 </div>
@@ -138,6 +138,11 @@
     <button class="fbtn" onclick="setFilter('caducada',this)">Caducadas</button>
     <button class="fbtn" onclick="setFilter('archivo',this)">Archivo</button>
   </div>
+  <div id="fichas-est-filter-row" style="display:none;padding:0 20px 8px">
+    <select class="input" id="fichas-est-select" onchange="setEstFilter(this.value,this)" style="font-size:11px;padding:7px 10px">
+      <option value="all">🏪 Todos los establecimientos</option>
+    </select>
+  </div>
   <div class="collapsible-header" id="col-fichas" onclick="toggleCollapse('col-fichas')" style="padding:8px 20px;border-bottom:1px solid var(--border)">
     <span class="ch-title" style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Lista de fichas</span>
     <span class="collapsible-arrow open">▼</span>
@@ -182,6 +187,11 @@
       <div class="collapsible-header" id="col-productos" onclick="toggleCollapse('col-productos')">
         <span class="ch-title card-title" style="border:none;background:none;padding:0;margin:0">🛒 Productos</span>
         <span class="collapsible-arrow open">▼</span>
+      </div>
+      <div id="prod-est-filter-row" style="display:none;padding:8px 16px 0">
+        <select class="input" id="prod-est-filter" onchange="renderProductos()" style="font-size:11px;padding:7px 10px">
+          <option value="all">🏪 Todos los establecimientos</option>
+        </select>
       </div>
       <div class="collapsible-body" id="col-productos-body">
         <div class="card-body" id="productos-list">
@@ -243,6 +253,11 @@
       <div class="collapsible-header" id="col-usuarios" onclick="toggleCollapse('col-usuarios')" style="padding:12px 16px;background:var(--surface2)">
         <span class="ch-title" style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">👥 Usuarios</span>
         <span class="collapsible-arrow open">▼</span>
+      </div>
+      <div id="user-est-filter-row" style="display:none;padding:8px 16px 0">
+        <select class="input" id="user-est-filter" onchange="loadAdmins()" style="font-size:11px;padding:7px 10px">
+          <option value="all">🏪 Todos los establecimientos</option>
+        </select>
       </div>
       <div class="collapsible-body" id="col-usuarios-body">
       <div class="card-body" style="padding-top:0">

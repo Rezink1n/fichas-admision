@@ -35,10 +35,11 @@ function renderProductos() {
     </div>`;
 
   if (isSuperAdmin()) {
+    const filtEst = document.getElementById('prod-est-filter')?.value || 'all';
+    let filtrados = filtEst === 'all' ? productos : productos.filter(p => p.establecimiento_id === filtEst || (!p.establecimiento_id && filtEst === '__sin__'));
     const grupos = {};
-    productos.forEach(p => {
+    filtrados.forEach(p => {
       const key = p.establecimiento_id || '__sin__';
-      // nombre del establecimiento lo resolvemos desde _todosEsts
       const est = _todosEsts?.find(e=>e.id===p.establecimiento_id);
       const nom = est?.nombre || 'Sin establecimiento';
       if (!grupos[key]) grupos[key] = {nombre: nom, prods: []};
@@ -49,7 +50,7 @@ function renderProductos() {
         🏪 ${g.nombre}
       </div>
       ${g.prods.map(productoRow).join('')}
-    `).join('');
+    `).join('') || '<div style="color:var(--muted);font-size:12px">Sin productos</div>';
   } else {
     el.innerHTML = productos.map(productoRow).join('');
   }

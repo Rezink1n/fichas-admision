@@ -2,20 +2,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   const uid    = params.get('uid');
 
-  // ?reset=1 → limpiar todo y ir a setup
-  if (params.get('reset') === '1') {
+  // ?setup=fichas-setup-2024 → acceso al panel de configuración (solo desarrollador)
+  if (params.get('setup') === 'fichas-setup-2024') {
     localStorage.clear();
     window.history.replaceState({}, '', window.location.pathname);
     showSetup();
     return;
   }
 
-  // ?logout=1 → limpiar sesión e ir a login
+  // ?logout=1 → cerrar sesión
   if (params.get('logout') === '1') {
     localStorage.removeItem('saved_session');
     window.history.replaceState({}, '', window.location.pathname);
-    const { url, key } = getConfig();
-    if (!url || !key) { showSetup(); return; }
     showLogin();
     return;
   }
@@ -35,8 +33,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const saved = await tryRestoreSession();
   if (saved) return;
-  const { url, key } = getConfig();
-  if (!url || !key) { showSetup(); return; }
   showLogin();
 });
 
