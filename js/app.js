@@ -1,21 +1,38 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const uid = new URLSearchParams(window.location.search).get('uid');
+  const params = new URLSearchParams(window.location.search);
+  const uid    = params.get('uid');
+
+  // ?reset=1 → limpiar todo y ir a setup
+  if (params.get('reset') === '1') {
+    localStorage.clear();
+    window.history.replaceState({}, '', window.location.pathname);
+    showSetup();
+    return;
+  }
+
+  // ?logout=1 → limpiar sesión e ir a login
+  if (params.get('logout') === '1') {
+    localStorage.removeItem('saved_session');
+    window.history.replaceState({}, '', window.location.pathname);
+    const { url, key } = getConfig();
+    if (!url || !key) { showSetup(); return; }
+    showLogin();
+    return;
+  }
+
   const hasSaved = !!localStorage.getItem('saved_session');
 
   if (uid && hasSaved) {
-    // Sesión guardada + QR: entrar directo a la app con la ficha cargada
-    const restored = await tryRestoreSession(); // maneja el uid internamente
+    const restored = await tryRestoreSession();
     if (restored) return;
   }
 
   if (uid) {
-    // Sin sesión: mostrar vista pública
     document.getElementById('public-view').style.display = 'block';
     loadPublicFicha(uid);
     return;
   }
 
-  // Sin UID: flujo normal
   const saved = await tryRestoreSession();
   if (saved) return;
   const { url, key } = getConfig();
