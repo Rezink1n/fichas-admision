@@ -1,10 +1,15 @@
 const SB_URL_KEY = 'sb_url';
 const SB_KEY_KEY = 'sb_key';
 
+// Credenciales por defecto — permiten la vista pública sin configuración
+// La anon key es de solo lectura, es seguro incluirla aquí
+const DEFAULT_URL = 'https://oefojtnpxpoblxsipafa.supabase.co';
+const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lZm9qdG5weHBvYmx4c2lwYWZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzU4NDYsImV4cCI6MjA5NjAxMTg0Nn0.coUUNwiholNVmn6d1TgSQcWeCUMoWf6bu0OZwwLqsW4';
+
 function getConfig() {
   return {
-    url: localStorage.getItem(SB_URL_KEY) || '',
-    key: localStorage.getItem(SB_KEY_KEY) || '',
+    url: localStorage.getItem(SB_URL_KEY) || DEFAULT_URL,
+    key: localStorage.getItem(SB_KEY_KEY) || DEFAULT_KEY,
   };
 }
 
