@@ -1,3 +1,6 @@
+const SB_URL_KEY = 'sb_url';
+const SB_KEY_KEY = 'sb_key';
+
 function getConfig() {
   return {
     url: localStorage.getItem(SB_URL_KEY) || '',
