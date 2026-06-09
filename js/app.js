@@ -171,19 +171,19 @@ async function launchApp() {
   const navSettings = document.getElementById('nav-settings');
   // Trabajador: ocultar admin y ajustes
   if (navAdmin)    navAdmin.style.display    = _session?.role === 'trabajador' ? 'none' : '';
-  if (navSettings) navSettings.style.display = _session?.role === 'trabajador' ? 'none' : '';
+  if (navSettings) navSettings.style.display = 'none'; // movido a header como botón
   // Renombrar pestaña admin a "Test" para superadmin
   const adminLabel = document.getElementById('nav-admin-label');
   if (adminLabel) adminLabel.textContent = isSuperAdmin() ? 'Test' : 'Admin';
   const adminTitle = document.getElementById('admin-page-title');
-  if (adminTitle) adminTitle.innerHTML = isSuperAdmin() ? '🧪 <span>Test</span>' : 'Mi <span>espacio</span>';
+  if (adminTitle) adminTitle.innerHTML = isSuperAdmin() ? '🧪 <span>Test</span>' : '<span>Admin</span>';
   // P4: rellenar header global
   const gh = document.getElementById('global-header');
   if (gh) { gh.style.display = 'flex'; gh.style.alignItems = 'center'; }
 
   // Label usuario
   const displayName = _session?.nombre_completo || _session?.username || '';
-  try { document.getElementById('admin-username-label').textContent = `${displayName} · ${_session?.role||''}`; } catch(e){}
+  // admin-username-label removido del DOM
   // Rellenar header global INMEDIATAMENTE con lo que sabemos
   const ghLocal = document.getElementById('gh-local');
   const ghUser  = document.getElementById('gh-user');

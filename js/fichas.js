@@ -200,7 +200,7 @@ async function reloadFichas() {
 
 function updateStats() {
   const activas = allFichas.filter(f=>f.estado!=='archivo');
-  document.getElementById('s-total').textContent = activas.length;
+  document.getElementById('s-total').textContent = allFichas.filter(f=>f.estado!=='archivo').length;
   document.getElementById('s-vend').textContent  = activas.filter(f=>f.estado==='vendida').length;
   document.getElementById('s-usad').textContent  = activas.filter(f=>f.estado==='usada').length;
   document.getElementById('s-cad').textContent   = activas.filter(f=>f.estado==='caducada').length;
