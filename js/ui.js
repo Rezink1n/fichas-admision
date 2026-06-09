@@ -38,6 +38,15 @@ async function saveProductoModal() {
   try {
     if (id) {
       await dbFetch(`productos?id=eq.${id}`,{method:'PATCH',body:JSON.stringify(body)});
+      // Actualizar precio en fichas emitidas de este producto
+      if (body.precio !== undefined) {
+        const newSnap = JSON.stringify({nombre:body.nombre||nombre, precio:body.precio,
+          caducidad_tipo:body.caducidad_tipo, caducidad_valor:body.caducidad_valor,
+          caducidad_meses:body.caducidad_meses, caducidad_fecha_fija:body.caducidad_fecha_fija||null});
+        await dbFetch(`fichas?producto_id=eq.${id}&estado=eq.emitida`,{
+          method:'PATCH', body:JSON.stringify({valor:body.precio, producto_snapshot:newSnap})
+        }).catch(()=>{});
+      }
       toast('Producto actualizado ✓','ok');
     } else {
       if (_session?.establecimiento_id) body.establecimiento_id = _session.establecimiento_id;
@@ -45,7 +54,7 @@ async function saveProductoModal() {
       toast('Producto creado ✓','ok');
     }
     closeModal2('modal-producto');
-    loadProductos();
+    await loadProductos();
   } catch(e) { toast('Error: '+e.message,'err'); }
 }
 async function deleteProductoModal() {
@@ -112,7 +121,7 @@ async function saveUsuarioModal() {
       toast(`Usuario "${username}" creado ✓`,'ok');
     }
     closeModal2('modal-usuario');
-    loadAdmins();
+    await loadAdmins();
   } catch(e) { toast('Error: '+(e.message.includes('duplicate')?'Login ya existe':e.message),'err'); }
 }
 async function deleteUsuarioModal() {
@@ -166,7 +175,7 @@ async function saveUsuarioGlobalModal() {
       toast(`Usuario "${username}" creado ✓`,'ok');
     }
     closeModal2('modal-usuario-global');
-    loadAdminsGlobal();
+    await loadAdminsGlobal();
   } catch(e) { toast('Error: '+(e.message.includes('duplicate')?'Login ya existe':e.message),'err'); }
 }
 async function deleteUsuarioGlobalModal() {

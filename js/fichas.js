@@ -182,7 +182,7 @@ async function usarFicha(uid) {
 // ══════════════════════════════════════════════════════════
 //  BASE DE DATOS
 // ══════════════════════════════════════════════════════════
-let allFichas = [], currentFilter = 'all', currentEstFilter = 'all';
+let allFichas = [], currentFilter = 'all', currentEstFilter = 'all', currentProdFilter = 'all';
 
 async function reloadFichas() {
   document.getElementById('fichas-list').innerHTML = '<div class="loader"><div class="spin"></div> Cargando…</div>';
@@ -192,7 +192,7 @@ async function reloadFichas() {
       q += `&establecimiento_id=eq.${_session.establecimiento_id}`;
     allFichas = await dbFetch(q) || [];
     // también traer los snapshots
-    updateStats(); renderFichas();
+    updateStats(); renderFichas(); renderProdFilters();
   } catch(e) {
     document.getElementById('fichas-list').innerHTML = `<div class="empty">Error: ${e.message}</div>`;
   }
@@ -216,6 +216,23 @@ function setEstFilter(estId, btn) {
   document.querySelectorAll('.fbtn-est').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); renderFichas();
 }
+function setProdFilter(nombre, btn) {
+  currentProdFilter = nombre;
+  document.querySelectorAll('.fbtn-prod').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderFichas();
+}
+function renderProdFilters() {
+  const el = document.getElementById('fichas-prod-filter-row');
+  if (!el) return;
+  const nombres = [...new Set(allFichas.map(f => {
+    const snap = f.producto_snapshot ? JSON.parse(f.producto_snapshot) : null;
+    return (f.estado!=='emitida' && snap?.nombre) ? snap.nombre : (f.productos?.nombre||'');
+  }).filter(Boolean))].sort();
+  if (nombres.length <= 1) { el.style.display='none'; return; }
+  el.style.display = '';
+  el.innerHTML = `<button class="fbtn fbtn-prod ${currentProdFilter==='all'?'active':''}" onclick="setProdFilter('all',this)">Todos</button>`
+    + nombres.map(n=>`<button class="fbtn fbtn-prod ${currentProdFilter===n?'active':''}" onclick="setProdFilter(${JSON.stringify(n)},this)">${n}</button>`).join('');
+}
 
 function fichaCardHTML(f) {
   return `<div class="fcard" onclick="showDetail('${f.uid}')">
@@ -237,6 +254,13 @@ function renderFichas() {
   if (currentFilter === 'archivo') list = allFichas.filter(f=>f.estado==='archivo');
   else if (currentFilter !== 'all') list = list.filter(f=>f.estado===currentFilter);
   if (currentEstFilter !== 'all') list = list.filter(f=>f.establecimiento_id===currentEstFilter || (!f.establecimiento_id && currentEstFilter==='__sin__'));
+  if (currentProdFilter !== 'all') {
+    list = list.filter(f => {
+      const snap = f.producto_snapshot ? JSON.parse(f.producto_snapshot) : null;
+      const pNombre = (f.estado!=='emitida' && snap?.nombre) ? snap.nombre : (f.productos?.nombre||'');
+      return pNombre === currentProdFilter;
+    });
+  }
   if (q) list = list.filter(f=>f.uid.toLowerCase().includes(q));
   if (!list.length) { document.getElementById('fichas-list').innerHTML='<div class="empty">Sin fichas</div>'; return; }
 
@@ -291,10 +315,23 @@ function showDetail(uid) {
       ${canUsar?`<button class="btn btn-success btn-sm" data-uid="${f.uid}" data-valor="${f.valor}" data-nombre="${(f.productos?.nombre||'').replace(/"/g,'&quot;')}" onclick="usarFichaConfirm(this.dataset.uid,this.dataset.valor,this.dataset.nombre)">✓ Usar</button>`:''}
       ${f.qr_data&&f.estado!=='usada'?`<button class="btn btn-secondary btn-sm" onclick="showFichaQR('${f.uid}','${f.qr_data}')">📱 QR</button>`:''}
       ${f.estado==='emitida'&&isAdmin()?`<button class="btn btn-secondary btn-sm" onclick="showCambiarProducto('${f.id}','${f.uid}')">✏️ Producto</button>`:''}
+      ${f.estado==='usada'&&isAdmin()?`<button class="btn btn-secondary btn-sm" onclick="archivarFicha('${f.id}')">📦 Archivar</button>`:''}
       ${(isSuperAdmin()||(f.estado==='emitida'&&isAdmin()))?`<button class="btn btn-danger btn-sm" onclick="deleteFicha('${f.id}')">🗑</button>`:''}
       <button class="btn btn-secondary btn-sm" onclick="closeModal()">Cerrar</button>
     </div>`;
   document.getElementById('detail-modal').classList.add('open');
+}
+
+async function archivarFicha(id) {
+  if (!confirm('¿Mover esta ficha al archivo?')) return;
+  try {
+    const rows = await dbFetch(`fichas?id=eq.${id}&select=*,productos(*),establecimientos(*)`);
+    const f = rows?.[0];
+    const pSnap = f?.producto_snapshot || JSON.stringify({nombre:f?.productos?.nombre,precio:f?.productos?.precio});
+    const eSnap = f?.est_snapshot || JSON.stringify({nombre:f?.establecimientos?.nombre,direccion:f?.establecimientos?.direccion,maps_link:f?.establecimientos?.maps_link});
+    await dbFetch(`fichas?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({estado:'archivo',producto_snapshot:pSnap,est_snapshot:eSnap})});
+    toast('Ficha archivada','ok'); closeModal(); reloadFichas();
+  } catch(e) { toast('Error: '+e.message,'err'); }
 }
 
 async function deleteFicha(id) {

@@ -187,7 +187,36 @@ async function deleteEst(id, nombre) {
 async function showEstDetail(estId) {
   const est = (_todosEsts||[]).find(e=>e.id===estId);
   if (!est) return;
-  document.getElementById('est-detail').style.display = '';
+  // Mostrar como modal flotante encima de todo
+  let overlay = document.getElementById('est-detail-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'est-detail-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.85);display:flex;align-items:flex-end;overflow:hidden';
+    overlay.onclick = (ev) => { if(ev.target===overlay) closeEstDetail(); };
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `
+    <div style="width:100%;background:var(--surface);border-radius:20px 20px 0 0;border-top:2px solid var(--accent);max-height:90vh;overflow-y:auto;padding:20px" onclick="event.stopPropagation()">
+      <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h2 style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800">${est.nombre}</h2>
+        <button onclick="closeEstDetail()" style="background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted);font-size:16px;padding:5px 9px">✕</button>
+      </div>
+      <div id="ed-info" style="margin-bottom:12px"></div>
+      <div class="stats" id="ed-stats-box" style="margin:0 0 12px">
+        <div class="stat"><span class="n" id="ed-total">…</span><span class="l">Total</span></div>
+        <div class="stat"><span class="n" id="ed-vend">…</span><span class="l">Vendidas</span></div>
+        <div class="stat"><span class="n" id="ed-usad">…</span><span class="l">Usadas</span></div>
+        <div class="stat"><span class="n" id="ed-cad">…</span><span class="l">Caducadas</span></div>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:6px">🛒 Productos</div>
+      <div id="ed-productos" style="margin-bottom:14px"></div>
+      <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:6px">👥 Usuarios</div>
+      <div id="ed-usuarios"></div>
+    </div>`;
+  overlay.style.display = 'flex';
+  // est-detail sigue existiendo para compatibilidad pero está oculto
   document.getElementById('est-detail-nombre').textContent = est.nombre;
   document.getElementById('ed-info').innerHTML = `
     ${est.direccion?`<div style="font-size:12px;margin-bottom:6px">📍 ${est.direccion}</div>`:''}
@@ -237,11 +266,12 @@ async function showEstDetail(estId) {
   } catch(e) {}
 
   document.getElementById('ed-u-estid').value = estId;
-  document.getElementById('est-detail').scrollIntoView({behavior:'smooth'});
 }
 
 function closeEstDetail() {
   document.getElementById('est-detail').style.display = 'none';
+  const o = document.getElementById('est-detail-overlay');
+  if (o) o.style.display = 'none';
 }
 
 // ══ Añadir usuario a un establecimiento desde su detalle ══
