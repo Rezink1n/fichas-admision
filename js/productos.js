@@ -30,7 +30,7 @@ function renderProductos() {
       <div style="font-size:11px;color:var(--muted);margin-bottom:6px">⏱ ${fmtCad(p)}</div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-secondary btn-sm" onclick="showProdQR('${p.id}')" style="font-size:10px;padding:4px 8px">📱 QR</button>
-        <button class="btn btn-secondary btn-sm" onclick="openProductoModalById('${p.id}')" style="font-size:10px;padding:4px 8px">✏️</button>
+        <button class="btn btn-secondary btn-sm" onclick="openProductoModalById('${p.id}')" data-pid="${p.id}" style="font-size:10px;padding:4px 8px">✏️</button>
       </div>
     </div>`;
 
@@ -126,6 +126,7 @@ async function generarFichas() {
   const estRows = await dbFetch(`establecimientos?id=eq.${_session?.establecimiento_id}&select=nombre`).catch(()=>[]);
   const estNombre = estRows?.[0]?.nombre || '';
   const fichasEmitidas = [];
+  closeModal2('modal-emitir'); // cerrar antes de empezar
   toast(`Emitiendo ${cantidad} ficha${cantidad>1?'s':''}...`,'');
   try {
     for (let i=0; i<cantidad; i++) {
@@ -160,7 +161,6 @@ async function generarFichas() {
     document.getElementById('qr-modal').classList.add('open');
     toast(`${fichasEmitidas.length} ficha${fichasEmitidas.length>1?'s':''}  emitida${fichasEmitidas.length>1?'s':''} ✓`,'ok');
     document.getElementById('gen-uid').value='';
-    closeModal2('modal-emitir');
     reloadFichas();
   } catch(e) { toast('Error: '+e.message,'err'); }
 }
@@ -196,7 +196,15 @@ function printQR(uid, data) {
 //  ESTABLECIMIENTOS
 // ══════════════════════════════════════════════════════════
 
-function openProductoModalById(id) {
-  const p = productos.find(x => x.id === id);
+async function openProductoModalById(id) {
+  let p = (productos||[]).find(x => x.id === id);
+  if (!p) {
+    // fallback: buscar en BD
+    try {
+      const rows = await dbFetch(`productos?id=eq.${id}&select=*`);
+      p = rows?.[0];
+    } catch(e) {}
+  }
   if (p) openProductoModal(p);
+  else toast('Producto no encontrado', 'err');
 }

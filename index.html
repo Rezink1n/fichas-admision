@@ -105,12 +105,9 @@
   </div>
   <div id="buscar-result" style="margin-top:14px"></div>
 
-  <!-- Info establecimiento para trabajadores -->
-  <div id="est-info-trabajador" style="display:none;margin-top:14px">
-    <div class="card">
-      <div class="card-title">🏪 Mi establecimiento</div>
-      <div class="card-body" id="est-info-body"></div>
-    </div>
+  <!-- Botón info establecimiento -->
+  <div id="est-info-trabajador" style="display:none;margin-top:12px;padding:0 20px">
+    <button class="btn btn-secondary btn-sm" onclick="openModal('modal-est-info')" style="width:100%">🏪 Ver mi establecimiento</button>
   </div>
 </div>
 
@@ -177,13 +174,7 @@
     </div>
   </div>
 
-  <!-- Info mi establecimiento (solo lectura) -->
-  <div id="section-est-info" style="margin-top:0">
-    <div class="card">
-      <div class="card-title">🏪 Mi establecimiento</div>
-      <div class="card-body" id="est-info-readonly"></div>
-    </div>
-  </div>
+  <!-- info est ahora en modal-est-info -->
 
   <!-- Usuarios -->
   <div id="section-usuarios">
@@ -293,6 +284,18 @@
 
   <div style="padding:0 20px 20px;margin-top:8px">
     <button class="btn btn-danger btn-block" onclick="logout()">🚪 Cerrar sesión</button>
+  </div>
+</div>
+
+<!-- MODAL: INFO ESTABLECIMIENTO -->
+<div class="moverlay" id="modal-est-info" onclick="closeModal2('modal-est-info')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mhandle"></div>
+    <h2>🏪 Mi establecimiento</h2>
+    <div id="est-info-body"></div>
+    <div style="margin-top:14px">
+      <button class="btn btn-secondary btn-block" onclick="closeModal2('modal-est-info')">Cerrar</button>
+    </div>
   </div>
 </div>
 

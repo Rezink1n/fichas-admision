@@ -202,7 +202,7 @@ async function launchApp() {
   setDisplay('section-est',      isSuperAdmin());
   setDisplay('section-ests',     isSuperAdmin());
   setDisplay('section-config',   isSuperAdmin());
-  setDisplay('section-est-info', false); // info est solo en página Buscar
+  // section-est-info eliminado
   setDisplay('u-est-row',        isSuperAdmin());
 
   document.getElementById('u-role-row').querySelector('select').innerHTML =
