@@ -158,14 +158,23 @@ async function launchApp() {
   const nav = document.getElementById('main-nav');
   nav.style.display = 'flex';
   document.getElementById('page-buscar').classList.add('active');
-  document.getElementById('nav-fichas').style.display = isAdmin() ? '' : 'none';
-  document.getElementById('nav-ests').style.display  = isSuperAdmin() ? '' : 'none';
-  document.getElementById('nav-users').style.display = isSuperAdmin() ? '' : 'none';
+  // Pestañas según rol
+  document.getElementById('nav-fichas').style.display   = isAdmin() ? '' : 'none';
+  document.getElementById('nav-ests').style.display     = isSuperAdmin() ? '' : 'none';
+  document.getElementById('nav-users').style.display    = isSuperAdmin() ? '' : 'none';
+  const navAdmin    = document.getElementById('nav-admin');
+  const navSettings = document.getElementById('nav-settings');
+  // Trabajador: ocultar admin y ajustes
+  if (navAdmin)    navAdmin.style.display    = _session?.role === 'trabajador' ? 'none' : '';
+  if (navSettings) navSettings.style.display = _session?.role === 'trabajador' ? 'none' : '';
   // Renombrar pestaña admin a "Test" para superadmin
   const adminLabel = document.getElementById('nav-admin-label');
   if (adminLabel) adminLabel.textContent = isSuperAdmin() ? 'Test' : 'Admin';
   const adminTitle = document.getElementById('admin-page-title');
   if (adminTitle) adminTitle.innerHTML = isSuperAdmin() ? '🧪 <span>Test</span>' : 'Mi <span>espacio</span>';
+  // P4: rellenar header global
+  const gh = document.getElementById('global-header');
+  if (gh) gh.style.display = 'flex';
 
   // Label usuario
   const displayName = _session?.nombre_completo || _session?.username || '';
@@ -209,6 +218,11 @@ async function launchApp() {
         const e = rows[0];
         document.getElementById('buscar-est-name').textContent = e.nombre;
         document.getElementById('fichas-est-name').textContent = e.nombre;
+        // Header global
+        const ghLocal = document.getElementById('gh-local');
+        const ghUser  = document.getElementById('gh-user');
+        if (ghLocal) ghLocal.textContent = e.nombre;
+        if (ghUser)  ghUser.textContent  = `${displayName} · ${_session.role}`;
         // Cargar campos establecimiento en admin
         document.getElementById('e-nombre').value   = e.nombre || '';
         document.getElementById('e-dir').value     = e.direccion || '';

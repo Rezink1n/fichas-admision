@@ -1,3 +1,192 @@
+// ══════════════════════════════════════════════════════════
+//  SISTEMA DE MODALES UNIFICADO
+// ══════════════════════════════════════════════════════════
+function openModal(id) {
+  document.getElementById(id)?.classList.add('open');
+}
+function closeModal2(id) {
+  document.getElementById(id)?.classList.remove('open');
+}
+
+// ── Producto modal ──
+function openProductoModal(prod = null) {
+  const isEdit = !!prod;
+  document.getElementById('modal-prod-title').textContent = isEdit ? '✏️ Editar producto' : '🛒 Nuevo producto';
+  document.getElementById('p-edit-id').value  = prod?.id || '';
+  document.getElementById('p-nombre').value   = prod?.nombre || '';
+  document.getElementById('p-precio').value   = prod?.precio || '';
+  document.getElementById('p-cad-tipo').value = prod?.caducidad_tipo || 'meses';
+  document.getElementById('p-cad-val').value  = prod?.caducidad_valor || prod?.caducidad_meses || 3;
+  document.getElementById('p-cad-fecha').value = prod?.caducidad_fecha_fija || '';
+  document.getElementById('p-del-btn').style.display = isEdit ? '' : 'none';
+  toggleCadInput();
+  openModal('modal-producto');
+}
+async function saveProductoModal() {
+  const id      = document.getElementById('p-edit-id').value;
+  const nombre  = document.getElementById('p-nombre').value.trim();
+  const precio  = parseFloat(document.getElementById('p-precio').value);
+  const cadTipo = document.getElementById('p-cad-tipo').value;
+  const cadVal  = parseInt(document.getElementById('p-cad-val').value) || 3;
+  const cadFecha= document.getElementById('p-cad-fecha').value || null;
+  if (!nombre || isNaN(precio)) { toast('Nombre y precio obligatorios','err'); return; }
+  const cadMeses = (cadTipo==='nunca'||cadTipo==='fecha') ? null : cadTipo==='dias' ? Math.ceil(cadVal/30) : cadVal;
+  const body = {nombre, precio, caducidad_tipo:cadTipo,
+    caducidad_valor: (cadTipo!=='nunca'&&cadTipo!=='fecha') ? cadVal : null,
+    caducidad_fecha_fija: cadTipo==='fecha' ? cadFecha : null};
+  if (cadMeses !== null) body.caducidad_meses = cadMeses;
+  try {
+    if (id) {
+      await dbFetch(`productos?id=eq.${id}`,{method:'PATCH',body:JSON.stringify(body)});
+      toast('Producto actualizado ✓','ok');
+    } else {
+      if (_session?.establecimiento_id) body.establecimiento_id = _session.establecimiento_id;
+      await dbFetch('productos',{method:'POST',body:JSON.stringify(body)});
+      toast('Producto creado ✓','ok');
+    }
+    closeModal2('modal-producto');
+    loadProductos();
+  } catch(e) { toast('Error: '+e.message,'err'); }
+}
+async function deleteProductoModal() {
+  const id = document.getElementById('p-edit-id').value;
+  if (!id || !confirm('¿Eliminar este producto?')) return;
+  // Verificar fichas emitidas
+  const emitidas = await dbFetch(`fichas?producto_id=eq.${id}&estado=eq.emitida&select=id&limit=1`).catch(()=>[]);
+  if (emitidas?.length) { toast('Hay fichas emitidas con este producto','err'); return; }
+  await dbFetch(`productos?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({activo:false})});
+  toast('Producto eliminado','ok');
+  closeModal2('modal-producto');
+  loadProductos();
+}
+
+// ── Usuario modal (page-admin) ──
+function openUsuarioModal(user = null) {
+  const isEdit = !!user;
+  document.getElementById('modal-user-title').textContent = isEdit ? '✏️ Editar usuario' : '👤 Nuevo usuario';
+  document.getElementById('u-edit-id').value   = user?.id || '';
+  document.getElementById('u-fullname').value  = user?.nombre_completo || '';
+  document.getElementById('u-name').value      = user?.username || '';
+  document.getElementById('u-name').disabled   = isEdit; // no cambiar login
+  document.getElementById('u-pass').value      = '';
+  document.getElementById('u-pass-label').textContent = isEdit ? '(vacío = no cambiar)' : '(mínimo 8 caracteres)';
+  document.getElementById('u-pass2-row').style.display = '';
+  const passInput = document.getElementById('u-pass');
+  passInput.placeholder = isEdit ? 'Vacío para no cambiar' : 'Mínimo 8 caracteres';
+  document.getElementById('u-del-btn').style.display = isEdit ? '' : 'none';
+  // Rol
+  const roleEl = document.getElementById('u-role');
+  if (roleEl && user?.role) roleEl.value = user.role;
+  // Est
+  const estRow = document.getElementById('u-est-row');
+  if (estRow) estRow.style.display = isSuperAdmin() ? '' : 'none';
+  openModal('modal-usuario');
+}
+async function saveUsuarioModal() {
+  const id       = document.getElementById('u-edit-id').value;
+  const username = document.getElementById('u-name').value.trim().toLowerCase();
+  const pass     = document.getElementById('u-pass').value;
+  const fullname = document.getElementById('u-fullname').value.trim();
+  const role     = document.getElementById('u-role').value;
+  if (!username) { toast('Login obligatorio','err'); return; }
+  if (!id && pass.length < 8) { toast('Contraseña mínimo 8 caracteres','err'); return; }
+  try {
+    const patch = {};
+    if (fullname) patch.nombre_completo = fullname;
+    if (!id) patch.username = username;
+    if (!id) patch.role = role;
+    if (id && role) patch.role = role;
+    if (pass && pass.length >= 8) patch.password_hash = await sha256(username+':'+pass);
+    if (isSuperAdmin()) {
+      const estSel = document.getElementById('u-est');
+      if (estSel) patch.establecimiento_id = estSel.value || null;
+    }
+    if (id) {
+      await dbFetch(`admins?id=eq.${id}`,{method:'PATCH',body:JSON.stringify(patch)});
+      toast('Usuario actualizado ✓','ok');
+    } else {
+      if (!pass || pass.length < 8) { toast('Contraseña obligatoria','err'); return; }
+      patch.password_hash = await sha256(username+':'+pass);
+      if (!isSuperAdmin() && _session?.establecimiento_id) patch.establecimiento_id = _session.establecimiento_id;
+      await dbFetch('admins',{method:'POST',body:JSON.stringify({username, role, ...patch})});
+      toast(`Usuario "${username}" creado ✓`,'ok');
+    }
+    closeModal2('modal-usuario');
+    loadAdmins();
+  } catch(e) { toast('Error: '+(e.message.includes('duplicate')?'Login ya existe':e.message),'err'); }
+}
+async function deleteUsuarioModal() {
+  const id = document.getElementById('u-edit-id').value;
+  const username = document.getElementById('u-name').value;
+  if (!id || !confirm(`¿Eliminar usuario "${username}"?`)) return;
+  await dbFetch(`admins?id=eq.${id}`,{method:'DELETE'});
+  toast('Usuario eliminado','ok');
+  closeModal2('modal-usuario');
+  loadAdmins();
+}
+
+// ── Usuario global modal (page-users) ──
+function openUsuarioGlobalModal(user = null) {
+  const isEdit = !!user;
+  document.getElementById('modal-ug-title').textContent = isEdit ? '✏️ Editar usuario' : '👤 Nuevo usuario';
+  document.getElementById('ug-edit-id').value  = user?.id || '';
+  document.getElementById('ug-fullname').value = user?.nombre_completo || '';
+  document.getElementById('ug-name').value     = user?.username || '';
+  document.getElementById('ug-name').disabled  = isEdit;
+  document.getElementById('ug-pass').value     = '';
+  document.getElementById('ug-pass').placeholder = isEdit ? 'Vacío para no cambiar' : 'Mínimo 8 caracteres';
+  document.getElementById('ug-del-btn').style.display = isEdit ? '' : 'none';
+  const roleEl = document.getElementById('ug-role');
+  if (roleEl && user?.role) roleEl.value = user.role;
+  const estEl = document.getElementById('ug-est');
+  if (estEl && user?.establecimiento_id) estEl.value = user.establecimiento_id;
+  openModal('modal-usuario-global');
+}
+async function saveUsuarioGlobalModal() {
+  const id       = document.getElementById('ug-edit-id').value;
+  const username = document.getElementById('ug-name').value.trim().toLowerCase();
+  const pass     = document.getElementById('ug-pass').value;
+  const fullname = document.getElementById('ug-fullname').value.trim();
+  const role     = document.getElementById('ug-role').value;
+  const estId    = document.getElementById('ug-est').value;
+  if (!username) { toast('Login obligatorio','err'); return; }
+  try {
+    const patch = {role};
+    if (fullname) patch.nombre_completo = fullname;
+    if (estId) patch.establecimiento_id = estId; else patch.establecimiento_id = null;
+    if (pass && pass.length >= 8) patch.password_hash = await sha256(username+':'+pass);
+    if (id) {
+      await dbFetch(`admins?id=eq.${id}`,{method:'PATCH',body:JSON.stringify(patch)});
+      toast('Usuario actualizado ✓','ok');
+    } else {
+      if (!pass || pass.length < 8) { toast('Contraseña obligatoria','err'); return; }
+      patch.username = username;
+      patch.password_hash = await sha256(username+':'+pass);
+      await dbFetch('admins',{method:'POST',body:JSON.stringify(patch)});
+      toast(`Usuario "${username}" creado ✓`,'ok');
+    }
+    closeModal2('modal-usuario-global');
+    loadAdminsGlobal();
+  } catch(e) { toast('Error: '+(e.message.includes('duplicate')?'Login ya existe':e.message),'err'); }
+}
+async function deleteUsuarioGlobalModal() {
+  const id = document.getElementById('ug-edit-id').value;
+  const u  = document.getElementById('ug-name').value;
+  if (!id || !confirm(`¿Eliminar usuario "${u}"?`)) return;
+  await dbFetch(`admins?id=eq.${id}`,{method:'DELETE'});
+  toast('Usuario eliminado','ok');
+  closeModal2('modal-usuario-global');
+  loadAdminsGlobal();
+}
+
+// ── Establecimiento: eliminar desde modal ──
+function deleteEstDesdeModal() {
+  const id = document.getElementById('ne-id').value;
+  if (!id) return;
+  closeModal2('modal-establecimiento');
+  deleteEstConfirm(id);
+}
+
 function askConfirm(title, body, btnLabel, btnClass, cb) {
   document.getElementById('confirm-title').textContent = title;
   document.getElementById('confirm-body').textContent  = body;

@@ -29,8 +29,7 @@ function renderProductos() {
       <div style="font-size:11px;color:var(--muted);margin-bottom:6px">⏱ ${fmtCad(p)}</div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-secondary btn-sm" onclick="showProdQR('${p.id}')" style="font-size:10px;padding:4px 8px">📱 QR</button>
-        <button class="btn btn-secondary btn-sm" onclick="editProducto('${p.id}')" style="font-size:10px;padding:4px 8px">✏️</button>
-        <button class="btn btn-secondary btn-sm" onclick="toggleProducto('${p.id}',false)" style="font-size:10px;padding:4px 8px">✕</button>
+        <button class="btn btn-secondary btn-sm" onclick="openProductoModal(p)" style="font-size:10px;padding:4px 8px">✏️</button>
       </div>
     </div>`;
 

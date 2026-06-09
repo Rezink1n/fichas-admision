@@ -22,23 +22,15 @@ async function loadEstablecimientos() {
   const el = document.getElementById('ests-list'); if(!el)return;
   try {
     _todosEsts = await dbFetch('establecimientos?order=nombre.asc') || [];
-    el.innerHTML = _todosEsts.map((e,i) => `
-      <div class="est-card">
-        <div class="est-card-header" onclick="toggleCollapse('est-col-${e.id}')">
-          <div class="est-card-icon">${e.protegido?'🔒':'🏪'}</div>
-          <div style="flex:1;min-width:0">
-            <div class="est-card-name">${e.nombre}</div>
-            <div class="est-card-sub">${e.direccion||'Sin dirección'} · ${e.max_admins||3} admins · ${e.max_trabajadores||10} trabajadores</div>
-          </div>
-          <span class="collapsible-arrow">▼</span>
+    el.innerHTML = _todosEsts.map(e => `
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)">
+        <div style="width:36px;height:36px;background:var(--accent)22;border:1px solid var(--accent)44;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${e.protegido?'🔒':'🏪'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700">${e.nombre}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:1px">${e.direccion||'Sin dirección'}</div>
         </div>
-        <div class="collapsible-body collapsed" id="est-col-${e.id}-body" style="max-height:0">
-          <div class="est-card-actions">
-            <button onclick="showEstDetail('${e.id}')" class="btn btn-secondary btn-sm">👁 Ver detalle</button>
-            <button onclick="editEstForm('${e.id}')" class="btn btn-secondary btn-sm">✏️ Editar</button>
-            ${e.protegido ? '<span style="font-size:10px;color:var(--muted);align-self:center">Protegido</span>' : `<button data-eid="${e.id}" onclick="deleteEstConfirm(this.dataset.eid)" class="btn btn-danger btn-sm">🗑 Eliminar</button>`}
-          </div>
-        </div>
+        <button onclick="showEstDetail('${e.id}')" class="btn btn-secondary btn-sm" style="font-size:11px;padding:5px 10px">👁</button>
+        <button onclick="editEstModal('${e.id}')" class="btn btn-secondary btn-sm" style="font-size:11px;padding:5px 10px">✏️</button>
       </div>`).join('') || '<div style="color:var(--muted);font-size:12px;padding:20px">Sin establecimientos</div>';
     // Rellenar select de establecimientos en form de usuario
     const sel = document.getElementById('u-est');
@@ -99,7 +91,7 @@ async function saveEstablecimientoForm() {
       await dbFetch('establecimientos',{method:'POST',body:JSON.stringify(body)});
       toast('Establecimiento creado ✓','ok');
     }
-    cancelEstForm();
+    closeModal2('modal-establecimiento');
     loadEstablecimientos();
   } catch(e) { toast('Error: '+e.message,'err'); }
 }
@@ -271,4 +263,18 @@ async function addAdminToEst() {
     toast(`Usuario "${username}" creado ✓`,'ok');
     showEstDetail(estId); // recargar detalle
   } catch(e) { toast('Error: '+(e.message.includes('duplicate')?'Usuario ya existe':e.message),'err'); }
+}
+
+// ══ Abrir modal de establecimiento para editar ══
+function editEstModal(id) {
+  const e = (_todosEsts||[]).find(x=>x.id===id); if(!e) return;
+  document.getElementById('modal-est-title').textContent = '✏️ Editar establecimiento';
+  document.getElementById('ne-id').value     = e.id;
+  document.getElementById('ne-nombre').value = e.nombre;
+  document.getElementById('ne-dir').value    = e.direccion||'';
+  document.getElementById('ne-maps').value   = e.maps_link||'';
+  document.getElementById('ne-maxadm').value  = e.max_admins||3;
+  document.getElementById('ne-maxtrab').value = e.max_trabajadores||10;
+  document.getElementById('ne-del-btn').style.display = e.protegido ? 'none' : '';
+  openModal('modal-establecimiento');
 }

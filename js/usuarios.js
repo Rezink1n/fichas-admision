@@ -31,9 +31,8 @@ async function loadAdmins() {
           </div>
         </div>
         <div style="display:flex;gap:5px;flex-shrink:0">
-          ${puedeBloq?`<button onclick="editUserModal('${a.id}','${a.nombre_completo||''}','${a.username}')" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 6px" title="Editar">✏️</button>`:''}
+          ${puedeBloq?`<button onclick="openUsuarioModal({id:'${a.id}',username:'${a.username}',nombre_completo:'${(a.nombre_completo||'').replace(/'/g,'')}',role:'${a.role}',establecimiento_id:'${a.establecimiento_id||''}'})" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 6px">✏️</button>`:''}
           ${puedeBloq?`<button onclick="toggleAdmin('${a.id}',${!a.activo})" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 6px">${a.activo?'🔒':'✓'}</button>`:''}
-          ${puedeElim?`<button onclick="deleteAdmin('${a.id}','${a.username}')" class="btn btn-danger btn-sm" style="font-size:10px;padding:4px 6px">🗑</button>`:''}
           ${esMismo?'<span style="font-size:10px;color:var(--muted)">(tú)</span>':''}
         </div>
       </div>`;
@@ -149,9 +148,8 @@ async function loadAdminsGlobal() {
           </div>
         </div>
         <div style="display:flex;gap:5px;flex-shrink:0">
-          ${!esMismo?`<button onclick="editUserModal('${a.id}','${a.nombre_completo||''}','${a.username}')" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 6px">✏️</button>`:''}
+          ${!esMismo?`<button onclick="openUsuarioGlobalModal({id:'${a.id}',username:'${a.username}',nombre_completo:'${(a.nombre_completo||'').replace(/'/g,'')}',role:'${a.role}',establecimiento_id:'${a.establecimiento_id||''}'})" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 6px">✏️</button>`:''}
           ${!esMismo?`<button onclick="toggleAdmin('${a.id}',${!a.activo})" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 6px">${a.activo?'🔒':'✓'}</button>`:''}
-          ${!esMismo?`<button onclick="deleteAdmin('${a.id}','${a.username}')" class="btn btn-danger btn-sm" style="font-size:10px;padding:4px 6px">🗑</button>`:''}
           ${esMismo?'<span style="font-size:10px;color:var(--muted)">(tú)</span>':''}
         </div>
       </div>`;
