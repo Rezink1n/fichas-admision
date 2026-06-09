@@ -155,49 +155,32 @@
 <!-- ════════════════════════════════════════
      PÁGINA: ADMIN
 ════════════════════════════════════════ -->
+<!-- ═══════════ PÁGINA: ADMIN (admin + trabajador) ═══════════ -->
 <div id="page-admin" class="page">
   <div class="ph">
     <div>
-      <h1>Panel <span>admin</span></h1>
+      <h1>Mi <span>espacio</span></h1>
       <div class="subtitle" id="admin-username-label"></div>
     </div>
   </div>
 
-  <!-- Generar ficha -->
+  <!-- Emitir ficha -->
   <div id="section-emitir">
     <div class="card">
       <div class="card-title">🪙 Emitir nueva ficha</div>
       <div class="card-body">
-        <div class="frow">
-          <label>Producto</label>
-          <select class="input" id="gen-producto"></select>
-        </div>
-        <div class="frow">
-          <label>UID personalizado (opcional)</label>
-          <input class="input" id="gen-uid" placeholder="Dejar vacío para generar automático">
-        </div>
+        <div class="frow"><label>Producto</label><select class="input" id="gen-producto"></select></div>
+        <div class="frow"><label>UID personalizado (opcional)</label><input class="input" id="gen-uid" placeholder="Dejar vacío para generar automático"></div>
         <button class="btn btn-primary btn-block" onclick="generarFicha()">Emitir ficha + QR</button>
       </div>
     </div>
   </div>
 
-  <!-- Productos -->
+  <!-- Productos de MI establecimiento -->
   <div id="section-productos">
     <div class="card">
-      <div class="collapsible-header" id="col-productos" onclick="toggleCollapse('col-productos')">
-        <span class="ch-title card-title" style="border:none;background:none;padding:0;margin:0">🛒 Productos</span>
-        <span class="collapsible-arrow open">▼</span>
-      </div>
-      <div id="prod-est-filter-row" style="display:none;padding:8px 16px 0">
-        <select class="input" id="prod-est-filter" onchange="renderProductos()" style="font-size:11px;padding:7px 10px">
-          <option value="all">🏪 Todos los establecimientos</option>
-        </select>
-      </div>
-      <div class="collapsible-body" id="col-productos-body">
-        <div class="card-body" id="productos-list">
-          <div class="loader"><div class="spin"></div></div>
-        </div>
-      </div>
+      <div class="card-title">🛒 Productos</div>
+      <div class="card-body" id="productos-list"><div class="loader"><div class="spin"></div></div></div>
     </div>
     <div class="card">
       <div class="card-title">+ Añadir producto</div>
@@ -206,113 +189,117 @@
         <div class="frow"><label>Precio (€)</label><input class="input" id="p-precio" type="number" step="0.10" placeholder="0.00"></div>
         <div class="frow">
           <label>Caducidad</label>
-          <div style="display:flex;gap:8px">
-            <select class="input" id="p-cad-tipo" onchange="toggleCadInput()" style="flex:1.2">
-              <option value="meses">Meses</option>
-              <option value="dias">Días</option>
-              <option value="fecha">Hasta fecha</option>
-              <option value="nunca">Nunca caduca</option>
-            </select>
-            <input class="input" id="p-cad-val" type="number" value="3" min="1" style="flex:1" placeholder="Cantidad">
-            <input class="input" id="p-cad-fecha" type="date" style="flex:1;display:none">
-          </div>
+          <select class="input" id="p-cad-tipo" onchange="toggleCadInput()" style="margin-bottom:6px">
+            <option value="meses">Meses desde la venta</option>
+            <option value="dias">Días desde la venta</option>
+            <option value="fecha">Hasta fecha fija</option>
+            <option value="nunca">Nunca caduca</option>
+          </select>
+          <input class="input" id="p-cad-val" type="number" value="3" min="1" placeholder="Cantidad">
+          <input class="input" id="p-cad-fecha" type="date" style="display:none;margin-top:6px">
         </div>
         <button class="btn btn-primary btn-block" onclick="addProducto()">Añadir producto</button>
       </div>
     </div>
   </div>
 
-  <!-- Establecimiento (solo superadmin) -->
-  <div id="section-est">
-    <div class="card">
-      <div class="card-title">🏪 Establecimiento</div>
-      <div class="card-body">
-        <div class="frow"><label>Nombre</label><input class="input" id="e-nombre" placeholder="Cafetería Central"></div>
-        <div class="frow"><label>Dirección</label><input class="input" id="e-dir" placeholder="Calle Mayor 1"></div>
-        <div class="frow"><label>Google Maps link</label><input class="input" id="e-maps" placeholder="https://maps.google.com/…"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-          <div class="frow" style="margin:0"><label>Máx. admins</label><input class="input" id="e-maxadm" type="number" min="1"></div>
-          <div class="frow" style="margin:0"><label>Máx. trabajadores</label><input class="input" id="e-maxtrab" type="number" min="1"></div>
-        </div>
-        <button class="btn btn-secondary btn-block" onclick="saveEstablecimiento()">Guardar establecimiento</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Info establecimiento para admin (solo lectura) -->
-  <div id="section-est-info" style="display:none">
+  <!-- Info mi establecimiento (solo lectura para admin) -->
+  <div id="section-est-info">
     <div class="card">
       <div class="card-title">🏪 Mi establecimiento</div>
       <div class="card-body" id="est-info-readonly"></div>
     </div>
   </div>
 
-  <!-- Usuarios de este establecimiento -->
+  <!-- Mis usuarios -->
   <div id="section-usuarios">
     <div class="card">
-      <div class="collapsible-header" id="col-usuarios" onclick="toggleCollapse('col-usuarios')" style="padding:12px 16px;background:var(--surface2)">
-        <span class="ch-title" style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">👥 Usuarios</span>
-        <span class="collapsible-arrow open">▼</span>
-      </div>
-      <div id="user-est-filter-row" style="display:none;padding:8px 16px 0">
-        <select class="input" id="user-est-filter" onchange="loadAdmins()" style="font-size:11px;padding:7px 10px">
-          <option value="all">🏪 Todos los establecimientos</option>
-        </select>
-      </div>
-      <div class="collapsible-body" id="col-usuarios-body">
-      <div class="card-body" style="padding-top:0">
+      <div class="card-title">👥 Usuarios</div>
+      <div class="card-body">
         <div id="admins-list"><div class="loader"><div class="spin"></div></div></div>
         <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
           <div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:700">Añadir usuario</div>
           <div class="frow"><label>Nombre completo</label><input class="input" id="u-fullname" type="text" placeholder="Ana García López"></div>
           <div class="frow"><label>Usuario</label><input class="input" id="u-name" type="text" placeholder="ana.garcia"></div>
           <div class="frow"><label>Contraseña</label><input class="input" id="u-pass" type="password" placeholder="Mínimo 8 caracteres"></div>
-          <div class="frow" id="u-role-row">
-            <label>Rol</label>
-            <select class="input" id="u-role">
-              <option value="trabajador">Trabajador</option>
-              <option value="admin">Admin</option>
-            </select>
+          <div class="frow" id="u-role-row"><label>Rol</label>
+            <select class="input" id="u-role"><option value="trabajador">Trabajador</option><option value="admin">Admin</option></select>
           </div>
-          <div class="frow" id="u-est-row" style="display:none">
-            <label>Establecimiento</label>
-            <select class="input" id="u-est"></select>
-          </div>
+          <div class="frow" id="u-est-row" style="display:none"><label>Establecimiento</label><select class="input" id="u-est"></select></div>
           <button class="btn btn-primary btn-block" onclick="addAdmin()">Añadir usuario</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Cambiar contraseña -->
+  <div class="card">
+    <div class="card-title">🔒 Mi contraseña</div>
+    <div class="card-body">
+      <div class="frow"><label>Nueva contraseña</label><input class="input" id="np1" type="password" placeholder="Mínimo 8 caracteres"></div>
+      <div class="frow"><label>Confirmar</label><input class="input" id="np2" type="password" placeholder="Repite" onkeydown="if(event.key==='Enter')changePassword()"></div>
+      <button class="btn btn-secondary btn-block" onclick="changePassword()">Actualizar contraseña</button>
+    </div>
+  </div>
+  <div style="padding:0 20px 20px">
+    <button class="btn btn-danger btn-block" onclick="logout()">🚪 Cerrar sesión</button>
+  </div>
+</div>
+
+<!-- ═══════════ PÁGINA: ESTABLECIMIENTOS (solo superadmin) ═══════════ -->
+<div id="page-ests" class="page">
+  <div class="ph">
+    <h1>🏢 <span>Establecimientos</span></h1>
+  </div>
+
+  <!-- Lista de establecimientos -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Todos los establecimientos</div>
+    <div class="card-body" id="ests-list"><div class="loader"><div class="spin"></div></div></div>
+  </div>
+
+  <!-- Crear/editar establecimiento -->
+  <div class="card" id="est-form-card">
+    <div class="card-title" id="est-form-title">+ Nuevo establecimiento</div>
+    <div class="card-body">
+      <input type="hidden" id="ne-id">
+      <div class="frow"><label>Nombre</label><input class="input" id="ne-nombre" placeholder="Cafetería Norte"></div>
+      <div class="frow"><label>Dirección</label><input class="input" id="ne-dir" placeholder="Calle…"></div>
+      <div class="frow"><label>Google Maps link</label><input class="input" id="ne-maps" placeholder="https://maps.google.com/…"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="frow" style="margin:0"><label>Máx. admins</label><input class="input" id="ne-maxadm" type="number" value="3" min="1"></div>
+        <div class="frow" style="margin:0"><label>Máx. trabajadores</label><input class="input" id="ne-maxtrab" type="number" value="10" min="1"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-primary" style="flex:1" id="ne-btn" onclick="saveEstablecimientoForm()">Crear</button>
+        <button class="btn btn-secondary btn-sm" id="ne-cancel" onclick="cancelEstForm()" style="display:none">Cancelar</button>
       </div>
     </div>
   </div>
 
-  <!-- Establecimientos (solo superadmin) -->
-  <div id="section-ests" style="display:none">
-    <div class="card">
-      <div class="card-title">🏢 Establecimientos</div>
-      <div class="card-body" id="ests-list"><div class="loader"><div class="spin"></div></div></div>
+  <!-- Detalle del establecimiento seleccionado -->
+  <div id="est-detail" style="display:none">
+    <div class="ph" style="margin-top:8px">
+      <div><h1 id="est-detail-nombre" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800"></h1></div>
+      <button class="btn btn-secondary btn-sm" onclick="closeEstDetail()">✕</button>
     </div>
-    <!-- Form crear/editar establecimiento -->
-    <div class="card" id="est-form-card">
-      <div class="card-title" id="est-form-title">+ Nuevo establecimiento</div>
-      <div class="card-body">
-        <input type="hidden" id="ne-id">
-        <div class="frow"><label>Nombre</label><input class="input" id="ne-nombre" placeholder="Cafetería Norte"></div>
-        <div class="frow"><label>Dirección</label><input class="input" id="ne-dir" placeholder="Calle…"></div>
-        <div class="frow"><label>Google Maps link</label><input class="input" id="ne-maps" placeholder="https://maps.google.com/…"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div class="frow" style="margin:0"><label>Máx. admins</label><input class="input" id="ne-maxadm" type="number" value="3" min="1"></div>
-          <div class="frow" style="margin:0"><label>Máx. trabajadores</label><input class="input" id="ne-maxtrab" type="number" value="10" min="1"></div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="btn btn-primary" style="flex:1" id="ne-btn" onclick="saveEstablecimientoForm()">Crear</button>
-          <button class="btn btn-secondary btn-sm" id="ne-cancel" onclick="cancelEstForm()" style="display:none">Cancelar</button>
-        </div>
-      </div>
+    <!-- Stats fichas -->
+    <div class="stats" id="est-detail-stats">
+      <div class="stat"><span class="n" id="ed-total">—</span><span class="l">Total</span></div>
+      <div class="stat"><span class="n" id="ed-vend">—</span><span class="l">Vendidas</span></div>
+      <div class="stat"><span class="n" id="ed-usad">—</span><span class="l">Usadas</span></div>
+      <div class="stat"><span class="n" id="ed-cad">—</span><span class="l">Caducadas</span></div>
     </div>
+    <!-- Info -->
+    <div class="card"><div class="card-title">ℹ️ Info</div><div class="card-body" id="ed-info"></div></div>
+    <!-- Productos -->
+    <div class="card"><div class="card-title">🛒 Productos</div><div class="card-body" id="ed-productos"></div></div>
+    <!-- Usuarios -->
+    <div class="card"><div class="card-title">👥 Usuarios</div><div class="card-body" id="ed-usuarios"></div></div>
   </div>
 
-  <!-- Config conexión — solo superadmin -->
-  <div class="card" id="section-config" style="display:none">
+  <!-- Config -->
+  <div class="card" id="section-config">
     <div class="card-title">🔌 Conexión Supabase</div>
     <div class="card-body">
       <div class="frow"><label>URL Supabase</label><input class="input" id="cfg-url" type="password"></div>
@@ -320,25 +307,43 @@
       <div class="frow">
         <label>URL pública (GitHub Pages)</label>
         <input class="input" id="cfg-baseurl" placeholder="https://usuario.github.io/fichas">
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">El QR generará: URL/?uid=FICHA</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">QR generará: URL/?uid=FICHA</div>
       </div>
-      <button class="btn btn-secondary btn-block" onclick="saveConfig()">Guardar configuración</button>
+      <button class="btn btn-secondary btn-block" onclick="saveConfig()">Guardar</button>
     </div>
   </div>
+</div>
 
-  <!-- Mi cuenta -->
-  <div class="card">
-    <div class="card-title">🔒 Cambiar mi contraseña</div>
+<!-- ═══════════ PÁGINA: USUARIOS GLOBALES (solo superadmin) ═══════════ -->
+<div id="page-users" class="page">
+  <div class="ph"><h1>👥 <span>Usuarios</span></h1></div>
+  <div style="padding:12px 20px 0">
+    <select class="input" id="user-est-filter" onchange="loadAdmins()" style="font-size:11px;padding:7px 10px">
+      <option value="all">🏪 Todos los establecimientos</option>
+    </select>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <div class="card-title">👥 Todos los usuarios</div>
     <div class="card-body">
-      <div class="frow"><label>Nueva contraseña</label><input class="input" id="np1" type="password" placeholder="Mínimo 8 caracteres"></div>
-      <div class="frow"><label>Confirmar</label><input class="input" id="np2" type="password" placeholder="Repite"
-        onkeydown="if(event.key==='Enter')changePassword()"></div>
-      <button class="btn btn-secondary btn-block" onclick="changePassword()">Actualizar contraseña</button>
+      <div id="admins-list-global"><div class="loader"><div class="spin"></div></div></div>
     </div>
   </div>
-
-  <div style="padding:0 20px 20px">
-    <button class="btn btn-danger btn-block" onclick="logout()">🚪 Cerrar sesión</button>
+  <div class="card">
+    <div class="card-title">+ Añadir usuario</div>
+    <div class="card-body">
+      <div class="frow"><label>Nombre completo</label><input class="input" id="ug-fullname" placeholder="Ana García López"></div>
+      <div class="frow"><label>Usuario</label><input class="input" id="ug-name" placeholder="ana.garcia"></div>
+      <div class="frow"><label>Contraseña</label><input class="input" id="ug-pass" type="password" placeholder="Mínimo 8 caracteres"></div>
+      <div class="frow"><label>Rol</label>
+        <select class="input" id="ug-role">
+          <option value="trabajador">Trabajador</option>
+          <option value="admin">Admin</option>
+          <option value="superadmin">Superadmin</option>
+        </select>
+      </div>
+      <div class="frow"><label>Establecimiento</label><select class="input" id="ug-est"></select></div>
+      <button class="btn btn-primary btn-block" onclick="addAdminGlobal()">Añadir usuario</button>
+    </div>
   </div>
 </div>
 
@@ -399,6 +404,14 @@
   <button id="nav-fichas" onclick="showPage('fichas')" style="display:none">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
     Datos
+  </button>
+  <button id="nav-ests" onclick="showPage('ests')" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Locales
+  </button>
+  <button id="nav-users" onclick="showPage('users')" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+    Usuarios
   </button>
   <button id="nav-admin" onclick="showPage('admin')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg>

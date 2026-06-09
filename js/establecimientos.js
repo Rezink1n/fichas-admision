@@ -28,8 +28,9 @@ async function loadEstablecimientos() {
           <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700">${e.nombre}</div>
           <div style="font-size:10px;color:var(--muted)">${e.direccion||'Sin dirección'}</div>
         </div>
+        <button onclick="showEstDetail('${e.id}')" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 8px">👁</button>
         <button onclick="editEstForm('${e.id}')" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 8px">✏️</button>
-        <button data-eid="${e.id}" onclick="deleteEstConfirm(this.dataset.eid)" class="btn btn-danger btn-sm" style="font-size:10px;padding:4px 8px">🗑</button>
+        ${e.protegido ? '' : `<button data-eid="${e.id}" onclick="deleteEstConfirm(this.dataset.eid)" class="btn btn-danger btn-sm" style="font-size:10px;padding:4px 8px">🗑</button>`}
       </div>`).join('') || '<div style="color:var(--muted);font-size:12px">Sin establecimientos</div>';
     // Rellenar select de establecimientos en form de usuario
     const sel = document.getElementById('u-est');
@@ -37,7 +38,7 @@ async function loadEstablecimientos() {
     // Rellenar selects de filtro (solo visibles para superadmin)
     const opts = '<option value="all">🏪 Todos los establecimientos</option>' +
       _todosEsts.map(e=>`<option value="${e.id}">${e.nombre}</option>`).join('');
-    ['fichas-est-select','prod-est-filter','user-est-filter'].forEach(id => {
+    ['fichas-est-select','prod-est-filter','user-est-filter','ug-est'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.innerHTML = opts;
     });
@@ -181,3 +182,55 @@ async function deleteEst(id, nombre) {
 // ══════════════════════════════════════════════════════════
 //  USUARIOS
 // ══════════════════════════════════════════════════════════
+
+// ══ Detalle de establecimiento ══
+async function showEstDetail(estId) {
+  const est = (_todosEsts||[]).find(e=>e.id===estId);
+  if (!est) return;
+  document.getElementById('est-detail').style.display = '';
+  document.getElementById('est-detail-nombre').textContent = est.nombre;
+  document.getElementById('ed-info').innerHTML = `
+    ${est.direccion?`<div style="font-size:12px;margin-bottom:6px">📍 ${est.direccion}</div>`:''}
+    ${est.maps_link?`<a href="${est.maps_link}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none;margin-bottom:8px;display:inline-flex">🗺 Maps</a>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <div><div style="font-size:9px;color:var(--muted)">MÁX ADMINS</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent)">${est.max_admins||3}</div></div>
+      <div><div style="font-size:9px;color:var(--muted)">MÁX TRAB.</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent)">${est.max_trabajadores||10}</div></div>
+    </div>`;
+
+  // Stats fichas
+  try {
+    const fichas = await dbFetch(`fichas?establecimiento_id=eq.${estId}&select=estado`);
+    const activas = (fichas||[]).filter(f=>f.estado!=='archivo');
+    document.getElementById('ed-total').textContent = activas.length;
+    document.getElementById('ed-vend').textContent  = activas.filter(f=>f.estado==='vendida').length;
+    document.getElementById('ed-usad').textContent  = activas.filter(f=>f.estado==='usada').length;
+    document.getElementById('ed-cad').textContent   = activas.filter(f=>f.estado==='caducada').length;
+  } catch(e) {}
+
+  // Productos
+  try {
+    const prods = await dbFetch(`productos?establecimiento_id=eq.${estId}&activo=eq.true&select=nombre,precio`);
+    document.getElementById('ed-productos').innerHTML = (prods||[]).length
+      ? (prods||[]).map(p=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px">${p.nombre}</span><span style="color:var(--accent);font-family:'Syne',sans-serif;font-weight:700">${p.precio}€</span></div>`).join('')
+      : '<div style="color:var(--muted);font-size:12px">Sin productos</div>';
+  } catch(e) {}
+
+  // Usuarios
+  try {
+    const users = await dbFetch(`admins?establecimiento_id=eq.${estId}&select=username,nombre_completo,role,activo`);
+    const roleColor = {superadmin:'#e8c84a',admin:'#4ab4e8',trabajador:'#4ae8a0'};
+    document.getElementById('ed-usuarios').innerHTML = (users||[]).length
+      ? (users||[]).map(u=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;font-size:13px">${u.nombre_completo||u.username}</div>
+          <span style="font-size:9px;padding:2px 6px;border-radius:4px;background:${roleColor[u.role]}22;color:${roleColor[u.role]};border:1px solid ${roleColor[u.role]}44">${u.role}</span>
+          ${!u.activo?'<span style="font-size:9px;color:var(--danger)">●</span>':''}
+        </div>`).join('')
+      : '<div style="color:var(--muted);font-size:12px">Sin usuarios</div>';
+  } catch(e) {}
+
+  document.getElementById('est-detail').scrollIntoView({behavior:'smooth'});
+}
+
+function closeEstDetail() {
+  document.getElementById('est-detail').style.display = 'none';
+}

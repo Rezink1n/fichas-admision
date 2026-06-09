@@ -117,3 +117,58 @@ async function deleteAdmin(id, username) {
 //  P7: CONFIRMACIÓN MODAL
 // ══════════════════════════════════════════════════════════
 let _confirmCallback = null;
+
+// ══ Gestión global de usuarios (page-users, solo superadmin) ══
+async function loadAdminsGlobal() {
+  const el = document.getElementById('admins-list-global'); if(!el) return;
+  const filtEst = document.getElementById('user-est-filter')?.value || 'all';
+  try {
+    let q = 'admins?order=created_at.asc&select=id,username,nombre_completo,role,activo,last_login,establecimiento_id,establecimientos(nombre)';
+    if (filtEst !== 'all') q += `&establecimiento_id=eq.${filtEst}`;
+    const rows = await dbFetch(q) || [];
+    const roleColor = {superadmin:'#e8c84a',admin:'#4ab4e8',trabajador:'#4ae8a0'};
+    el.innerHTML = rows.map(a => {
+      const esMismo = a.username === _session?.username;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            ${a.nombre_completo?`<span>${a.nombre_completo}</span><span style="color:var(--muted);font-size:10px">@${a.username}</span>`:a.username}
+            <span style="font-size:9px;padding:2px 6px;border-radius:4px;background:${roleColor[a.role]}22;color:${roleColor[a.role]};border:1px solid ${roleColor[a.role]}44">${a.role}</span>
+            ${!a.activo?'<span style="font-size:9px;color:var(--danger)">● INACTIVO</span>':''}
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">
+            ${a.establecimientos?.nombre?`🏪 ${a.establecimientos.nombre} · `:''}Último: ${a.last_login?new Date(a.last_login).toLocaleDateString('es-ES'):'nunca'}
+          </div>
+        </div>
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          ${!esMismo?`<button onclick="editUserModal('${a.id}','${a.nombre_completo||''}','${a.username}')" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 6px">✏️</button>`:''}
+          ${!esMismo?`<button onclick="toggleAdmin('${a.id}',${!a.activo})" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 6px">${a.activo?'🔒':'✓'}</button>`:''}
+          ${!esMismo?`<button onclick="deleteAdmin('${a.id}','${a.username}')" class="btn btn-danger btn-sm" style="font-size:10px;padding:4px 6px">🗑</button>`:''}
+          ${esMismo?'<span style="font-size:10px;color:var(--muted)">(tú)</span>':''}
+        </div>
+      </div>`;
+    }).join('') || '<div style="color:var(--muted);font-size:12px">Sin usuarios</div>';
+  } catch(e) { el.innerHTML=`<div style="color:var(--danger);font-size:12px">Error: ${e.message}</div>`; }
+}
+
+async function addAdminGlobal() {
+  const username  = document.getElementById('ug-name').value.trim().toLowerCase();
+  const pass      = document.getElementById('ug-pass').value;
+  const role      = document.getElementById('ug-role').value;
+  const fullname  = document.getElementById('ug-fullname').value.trim();
+  const estId     = document.getElementById('ug-est').value;
+  if (!username) { toast('Introduce un usuario','err'); return; }
+  if (pass.length < 8) { toast('Mínimo 8 caracteres','err'); return; }
+  try {
+    const hash = await sha256(username + ':' + pass);
+    const body = {username, password_hash:hash, role};
+    if (fullname) body.nombre_completo = fullname;
+    if (estId)    body.establecimiento_id = estId;
+    await dbFetch('admins',{method:'POST',body:JSON.stringify(body)});
+    document.getElementById('ug-name').value='';
+    document.getElementById('ug-pass').value='';
+    document.getElementById('ug-fullname').value='';
+    toast(`Usuario "${username}" creado ✓`,'ok');
+    loadAdminsGlobal();
+  } catch(e) { toast('Error: '+(e.message.includes('duplicate')?'Ese usuario ya existe':e.message),'err'); }
+}

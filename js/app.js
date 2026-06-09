@@ -244,7 +244,11 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  document.getElementById('nav-' + id).classList.add('active');
+  const navBtn = document.getElementById('nav-' + id);
+  if (navBtn) navBtn.classList.add('active');
+  // Cargar datos al entrar en páginas específicas
+  if (id === 'ests') loadEstablecimientos();
+  if (id === 'users') loadAdminsGlobal();
 }
 
 // ══════════════════════════════════════════════════════════

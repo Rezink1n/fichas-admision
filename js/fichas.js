@@ -233,8 +233,9 @@ function fichaCardHTML(f) {
 
 function renderFichas() {
   const q = (document.getElementById('fichas-search')?.value||'').toLowerCase();
-  let list = allFichas;
-  if (currentFilter !== 'all') list = list.filter(f=>f.estado===currentFilter);
+  let list = allFichas.filter(f => f.estado !== 'archivo'); // archivo no en "todos"
+  if (currentFilter === 'archivo') list = allFichas.filter(f=>f.estado==='archivo');
+  else if (currentFilter !== 'all') list = list.filter(f=>f.estado===currentFilter);
   if (currentEstFilter !== 'all') list = list.filter(f=>f.establecimiento_id===currentEstFilter || (!f.establecimiento_id && currentEstFilter==='__sin__'));
   if (q) list = list.filter(f=>f.uid.toLowerCase().includes(q));
   if (!list.length) { document.getElementById('fichas-list').innerHTML='<div class="empty">Sin fichas</div>'; return; }
