@@ -183,7 +183,15 @@ async function launchApp() {
 
   // Label usuario
   const displayName = _session?.nombre_completo || _session?.username || '';
-  document.getElementById('admin-username-label').textContent = `${displayName} · ${_session?.role||''}`;
+  try { document.getElementById('admin-username-label').textContent = `${displayName} · ${_session?.role||''}`; } catch(e){}
+  // Rellenar header global INMEDIATAMENTE con lo que sabemos
+  const ghLocal = document.getElementById('gh-local');
+  const ghUser  = document.getElementById('gh-user');
+  if (ghUser)  ghUser.textContent = `${displayName} · ${_session?.role||''}`;
+  if (ghLocal) ghLocal.textContent = isSuperAdmin() ? '⚡ Superadmin' : '…';
+  // Botón ajustes en header — visible para admin y superadmin
+  const ghSettingsBtn = document.getElementById('gh-settings-btn');
+  if (ghSettingsBtn) ghSettingsBtn.style.display = _session?.role !== 'trabajador' ? '' : 'none';
 
   // Secciones según rol — todo síncrono, sin awaits
   ['section-emitir','section-productos','section-usuarios'].forEach(id => {
@@ -221,13 +229,11 @@ async function launchApp() {
       const rows = await dbFetch(`establecimientos?id=eq.${_session.establecimiento_id}&select=nombre,direccion,maps_link,max_admins,max_trabajadores`);
       if (rows?.[0]) {
         const e = rows[0];
-        document.getElementById('buscar-est-name').textContent = e.nombre;
-        document.getElementById('fichas-est-name').textContent = e.nombre;
+        try{document.getElementById('buscar-est-name').textContent = e.nombre;}catch(e){}
+        try{document.getElementById('fichas-est-name').textContent = e.nombre;}catch(e){}
         // Header global
-        const ghLocal = document.getElementById('gh-local');
-        const ghUser  = document.getElementById('gh-user');
-        if (ghLocal) ghLocal.textContent = e.nombre;
-        if (ghUser)  ghUser.textContent  = `${displayName} · ${_session.role}`;
+        const ghLocalEl = document.getElementById('gh-local');
+        if (ghLocalEl) ghLocalEl.textContent = e.nombre;
         // Cargar campos establecimiento en admin
         document.getElementById('e-nombre').value   = e.nombre || '';
         document.getElementById('e-dir').value     = e.direccion || '';

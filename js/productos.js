@@ -1,7 +1,8 @@
 async function loadProductos() {
   try {
-    let q = 'productos?activo=eq.true&order=establecimiento_id.asc,precio.asc&select=*';
-    if (!isSuperAdmin() && _session?.establecimiento_id)
+    let q = 'productos?activo=eq.true&order=precio.asc&select=*';
+    // Siempre filtrar por establecimiento del usuario (incluyendo superadmin en tab Test)
+    if (_session?.establecimiento_id)
       q += `&establecimiento_id=eq.${_session.establecimiento_id}`;
     productos = await dbFetch(q) || [];
     renderProductos(); renderGenSelect();

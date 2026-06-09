@@ -278,3 +278,20 @@ function editEstModal(id) {
   document.getElementById('ne-del-btn').style.display = e.protegido ? 'none' : '';
   openModal('modal-establecimiento');
 }
+
+function openAddUserToEst() {
+  const estId = document.getElementById('ed-u-estid')?.value;
+  const est   = (_todosEsts||[]).find(e=>e.id===estId);
+  // Pre-rellenar modal-usuario-global con el establecimiento
+  document.getElementById('ug-edit-id').value  = '';
+  document.getElementById('ug-fullname').value = '';
+  document.getElementById('ug-name').value     = '';
+  document.getElementById('ug-name').disabled  = false;
+  document.getElementById('ug-pass').value     = '';
+  document.getElementById('ug-pass').placeholder = 'Mínimo 8 caracteres';
+  document.getElementById('ug-del-btn').style.display = 'none';
+  document.getElementById('modal-ug-title').textContent = est ? `👤 Nuevo usuario · ${est.nombre}` : '👤 Nuevo usuario';
+  const estEl = document.getElementById('ug-est');
+  if (estEl && estId) estEl.value = estId;
+  openModal('modal-usuario-global');
+}

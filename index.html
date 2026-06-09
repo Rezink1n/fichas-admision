@@ -78,7 +78,10 @@
     <div id="gh-local" style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
     <div id="gh-user" style="font-size:10px;color:var(--muted);margin-top:1px"></div>
   </div>
-  <button onclick="confirmLogout()" style="background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted);font-size:18px;padding:6px 8px;flex-shrink:0;line-height:1" title="Cerrar sesión">⏻</button>
+  <div id="gh-actions" style="display:flex;gap:6px;flex-shrink:0">
+    <button id="gh-settings-btn" onclick="showPage('settings')" style="background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted);font-size:16px;padding:6px 8px;line-height:1;display:none" title="Ajustes">⚙️</button>
+    <button onclick="confirmLogout()" style="background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted);font-size:18px;padding:6px 8px;line-height:1" title="Cerrar sesión">⏻</button>
+  </div>
 </div>
 
 <!-- ════════════════════════════════════════
@@ -225,19 +228,9 @@
       <div class="card-title">👥 Usuarios del local</div>
       <div class="card-body">
         <div id="ed-usuarios"></div>
-        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:8px">
-          <div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:700">Añadir usuario a este local</div>
-          <div class="frow"><label>Nombre completo</label><input class="input" id="ed-u-fullname" placeholder="Ana García"></div>
-          <div class="frow"><label>Usuario</label><input class="input" id="ed-u-name" placeholder="ana.garcia"></div>
-          <div class="frow"><label>Contraseña</label><input class="input" id="ed-u-pass" type="password" placeholder="Mínimo 8 caracteres"></div>
-          <div class="frow"><label>Rol</label>
-            <select class="input" id="ed-u-role">
-              <option value="trabajador">Trabajador</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
+        <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:8px">
           <input type="hidden" id="ed-u-estid">
-          <button class="btn btn-primary btn-block" onclick="addAdminToEst()">Añadir usuario</button>
+          <button class="btn btn-primary btn-sm" onclick="openAddUserToEst()">+ Añadir usuario a este local</button>
         </div>
       </div>
     </div>
