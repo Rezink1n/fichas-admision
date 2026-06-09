@@ -225,6 +225,9 @@ async function launchApp() {
 
   // Nombre establecimiento en headers
   if (_session.establecimiento_id) {
+    // Mostrar botón inmediatamente
+    const estBtnDiv = document.getElementById('est-info-trabajador');
+    if (estBtnDiv) estBtnDiv.style.display = '';
     try {
       const rows = await dbFetch(`establecimientos?id=eq.${_session.establecimiento_id}&select=nombre,direccion,maps_link,max_admins,max_trabajadores`);
       if (rows?.[0]) {
@@ -242,8 +245,7 @@ async function launchApp() {
         const eMaxTrab = document.getElementById('e-maxtrab');
         if (eMaxAdm)  eMaxAdm.value  = e.max_admins || 3;
         if (eMaxTrab) eMaxTrab.value = e.max_trabajadores || 10;
-        // Info establecimiento para todos (admin/trabajador), solo lectura
-        document.getElementById('est-info-trabajador').style.display = '';
+        // Info establecimiento
         document.getElementById('est-info-body').innerHTML = `
           <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:6px">${e.nombre}</div>
           ${e.direccion ? `<div style="font-size:12px;color:var(--muted);margin-bottom:4px">📍 ${e.direccion}</div>` : ''}
