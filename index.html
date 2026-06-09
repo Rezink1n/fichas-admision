@@ -302,10 +302,17 @@
     <div class="mhandle"></div>
     <h2>🪙 Emitir ficha</h2>
     <div class="frow"><label>Producto</label><select class="input" id="gen-producto"></select></div>
-    <div class="frow"><label>UID personalizado <span style="color:var(--muted)">(opcional)</span></label>
+    <div class="frow">
+      <label>Cantidad</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input class="input" id="gen-cantidad" type="number" value="1" min="1" max="100" style="width:80px">
+        <span style="font-size:11px;color:var(--muted)">fichas a emitir</span>
+      </div>
+    </div>
+    <div class="frow"><label>UID personalizado <span style="color:var(--muted)">(solo si cantidad=1)</span></label>
       <input class="input" id="gen-uid" placeholder="Dejar vacío para generar automático"></div>
     <div style="display:flex;gap:8px;margin-top:4px">
-      <button class="btn btn-primary" style="flex:1" onclick="generarFicha()">Emitir + QR</button>
+      <button class="btn btn-primary" style="flex:1" onclick="generarFichas()">Emitir + QR</button>
       <button class="btn btn-secondary btn-sm" onclick="closeModal2('modal-emitir')">Cancelar</button>
     </div>
   </div>

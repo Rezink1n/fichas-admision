@@ -30,7 +30,7 @@ function renderProductos() {
       <div style="font-size:11px;color:var(--muted);margin-bottom:6px">⏱ ${fmtCad(p)}</div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-secondary btn-sm" onclick="showProdQR('${p.id}')" style="font-size:10px;padding:4px 8px">📱 QR</button>
-        <button class="btn btn-secondary btn-sm" onclick="openProductoModal(p)" style="font-size:10px;padding:4px 8px">✏️</button>
+        <button class="btn btn-secondary btn-sm" onclick="openProductoModalById('${p.id}')" style="font-size:10px;padding:4px 8px">✏️</button>
       </div>
     </div>`;
 
@@ -96,55 +96,93 @@ async function toggleProducto(id, activo) {
 // ══════════════════════════════════════════════════════════
 //  GENERAR FICHA
 // ══════════════════════════════════════════════════════════
-async function generarFicha() {
-  const prodId = document.getElementById('gen-producto').value;
-  const prod = productos.find(p=>p.id===prodId);
-  if (!prod) { toast('Selecciona un producto','err'); return; }
-  const customUid = document.getElementById('gen-uid').value.trim();
-  const uid = customUid || 'F-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).substr(2,4).toUpperCase();
+// Genera QR como dataURL
+async function generarQR(uid) {
   const baseurl = (localStorage.getItem('sb_baseurl')||window.location.origin+window.location.pathname).replace(/\/$/,'');
-  const qrUrl = `${baseurl}?uid=${encodeURIComponent(uid)}`;
+  const qrUrl   = `${baseurl}?uid=${encodeURIComponent(uid)}`;
+  const tmp = document.createElement('div');
+  tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px';
+  document.body.appendChild(tmp);
+  await new Promise(res => { new QRCode(tmp,{text:qrUrl,width:300,height:300,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H}); setTimeout(res,300); });
+  const canvas = tmp.querySelector('canvas');
+  const qrData = canvas ? canvas.toDataURL('image/png') : null;
+  document.body.removeChild(tmp);
+  return {qrData, qrUrl};
+}
+
+async function generarFicha() { return generarFichas(); }
+
+async function generarFichas() {
+  const prodId   = document.getElementById('gen-producto').value;
+  const prod     = productos.find(p=>p.id===prodId);
+  if (!prod) { toast('Selecciona un producto','err'); return; }
+  const cantidad  = Math.max(1, Math.min(100, parseInt(document.getElementById('gen-cantidad')?.value)||1));
+  const customUid = document.getElementById('gen-uid').value.trim();
+  const productoSnap = JSON.stringify({
+    nombre:prod.nombre, precio:prod.precio,
+    caducidad_tipo:prod.caducidad_tipo, caducidad_valor:prod.caducidad_valor,
+    caducidad_meses:prod.caducidad_meses, caducidad_fecha_fija:prod.caducidad_fecha_fija||null
+  });
+  const estRows = await dbFetch(`establecimientos?id=eq.${_session?.establecimiento_id}&select=nombre`).catch(()=>[]);
+  const estNombre = estRows?.[0]?.nombre || '';
+  const fichasEmitidas = [];
+  toast(`Emitiendo ${cantidad} ficha${cantidad>1?'s':''}...`,'');
   try {
-    // Snapshot del producto en el momento de emisión (inmutable)
-    const productoSnap = JSON.stringify({
-      nombre: prod.nombre, precio: prod.precio,
-      caducidad_tipo: prod.caducidad_tipo, caducidad_valor: prod.caducidad_valor,
-      caducidad_meses: prod.caducidad_meses, caducidad_fecha_fija: prod.caducidad_fecha_fija || null
-    });
-    const body = {uid, producto_id:prodId, valor:prod.precio, estado:'emitida', producto_snapshot: productoSnap};
-    if (_session?.establecimiento_id) body.establecimiento_id = _session.establecimiento_id;
-    await dbFetch('fichas', {method:'POST', body:JSON.stringify(body)});
-    // Generar QR
-    const tmp = document.createElement('div');
-    tmp.style.cssText='position:absolute;left:-9999px;top:-9999px';
-    document.body.appendChild(tmp);
-    await new Promise(res=>{ new QRCode(tmp,{text:qrUrl,width:300,height:300,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H}); setTimeout(res,300); });
-    const canvas = tmp.querySelector('canvas');
-    const qrData = canvas ? canvas.toDataURL('image/png') : null;
-    document.body.removeChild(tmp);
-    if (qrData) await dbFetch(`fichas?uid=eq.${encodeURIComponent(uid)}`,{method:'PATCH',body:JSON.stringify({qr_data:qrData})});
-    // Modal QR
-    const estNombre = (await dbFetch(`establecimientos?id=eq.${_session?.establecimiento_id}&select=nombre`).catch(()=>[]))?.[0]?.nombre || '';
-    document.getElementById('qr-content').innerHTML = `
-      <div style="margin-bottom:12px">
-        <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;margin-bottom:2px">${uid}</div>
-        <div style="color:var(--muted);font-size:12px">${prod.nombre} · ${prod.precio}€</div>
-        ${estNombre ? `<div style="color:var(--accent);font-size:11px;margin-top:2px">🏪 ${estNombre}</div>` : ''}
-        <div style="color:var(--muted);font-size:10px;margin-top:4px;word-break:break-all">${qrUrl}</div>
+    for (let i=0; i<cantidad; i++) {
+      const uid = (cantidad===1 && customUid) ? customUid
+        : 'F-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).substr(2,4).toUpperCase();
+      const body = {uid, producto_id:prodId, valor:prod.precio, estado:'emitida', producto_snapshot:productoSnap};
+      if (_session?.establecimiento_id) body.establecimiento_id = _session.establecimiento_id;
+      await dbFetch('fichas',{method:'POST',body:JSON.stringify(body)});
+      const {qrData, qrUrl} = await generarQR(uid);
+      if (qrData) await dbFetch(`fichas?uid=eq.${encodeURIComponent(uid)}`,{method:'PATCH',body:JSON.stringify({qr_data:qrData})});
+      fichasEmitidas.push({uid, qrData, qrUrl});
+    }
+    window._lastFichas = fichasEmitidas.map(f=>({...f, prodNombre:prod.nombre, precio:prod.precio, estNombre}));
+    const content = document.getElementById('qr-content');
+    content.innerHTML = `
+      <div style="margin-bottom:10px">
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700">✓ ${fichasEmitidas.length} ficha${fichasEmitidas.length>1?'s emitidas':' emitida'}</div>
+        <div style="font-size:11px;color:var(--muted)">${prod.nombre} · ${prod.precio}€ ${estNombre?'· '+estNombre:''}</div>
       </div>
-      ${qrData?`<div style="background:#fff;padding:14px;border-radius:8px;display:inline-block;margin-bottom:14px"><img src="${qrData}" style="width:190px;height:190px;display:block"></div>`:''}
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        ${fichasEmitidas.map(f=>`
+          <div style="text-align:center;background:#fff;border-radius:6px;padding:6px;cursor:pointer" onclick="downloadQR('${f.uid}','${f.qrData}')">
+            <img src="${f.qrData}" style="width:38px;height:38px;display:block">
+            <div style="font-size:7px;color:#333;margin-top:2px;max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.uid}</div>
+          </div>`).join('')}
+      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${qrData?`<button class="btn btn-primary btn-sm" onclick="downloadQR('${uid}',\`${qrData}\`)">⬇ Descargar</button>`:''}
-        ${qrData?`<button class="btn btn-secondary btn-sm" onclick="printQR('${uid}',\`${qrData}\`)">🖨 Imprimir</button>`:''}
+        <button class="btn btn-primary btn-sm" onclick="imprimirTodasFichas()">🖨 Imprimir todas</button>
+        ${fichasEmitidas.length===1?`<button class="btn btn-secondary btn-sm" onclick="downloadQR('${fichasEmitidas[0].uid}','${fichasEmitidas[0].qrData}')">⬇ Descargar</button>`:''}
         <button class="btn btn-secondary btn-sm" onclick="closeQRModal()">Cerrar</button>
       </div>`;
     document.getElementById('qr-modal').classList.add('open');
-    toast('Ficha emitida ✓','ok');
+    toast(`${fichasEmitidas.length} ficha${fichasEmitidas.length>1?'s':''}  emitida${fichasEmitidas.length>1?'s':''} ✓`,'ok');
     document.getElementById('gen-uid').value='';
+    closeModal2('modal-emitir');
     reloadFichas();
   } catch(e) { toast('Error: '+e.message,'err'); }
 }
 
+function imprimirTodasFichas() {
+  const fichas = window._lastFichas||[];
+  if (!fichas.length) return;
+  const items = fichas.map(f=>`
+    <div style="display:inline-block;text-align:center;margin:3mm;vertical-align:top;page-break-inside:avoid">
+      <img src="${f.qrData}" style="width:10mm;height:10mm;display:block">
+      <div style="font-size:5pt;font-family:monospace;margin-top:1mm;max-width:14mm;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.uid}</div>
+    </div>`).join('');
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head>
+    <style>@page{margin:8mm}body{margin:0;font-family:monospace}@media print{.no-print{display:none}}</style>
+  </head><body>
+    <div style="font-size:7pt;margin-bottom:3mm">${fichas[0].estNombre||''} · ${fichas[0].prodNombre} · ${fichas[0].precio}€</div>
+    ${items}
+    <br><button class="no-print" onclick="window.print()" style="margin-top:4mm;padding:4px 12px">Imprimir</button>
+  </body></html>`);
+  w.document.close();
+}
 function closeQRModal() { document.getElementById('qr-modal').classList.remove('open'); }
 function downloadQR(uid, data) { if(!data)return; const a=document.createElement('a'); a.href=data; a.download=`ficha-${uid}.png`; a.click(); }
 function printQR(uid, data) {
@@ -157,3 +195,8 @@ function printQR(uid, data) {
 // ══════════════════════════════════════════════════════════
 //  ESTABLECIMIENTOS
 // ══════════════════════════════════════════════════════════
+
+function openProductoModalById(id) {
+  const p = productos.find(x => x.id === id);
+  if (p) openProductoModal(p);
+}
