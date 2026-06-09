@@ -8,8 +8,6 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-</head>
-<body>
 
 <!-- ═══════════ VISTA PÚBLICA ═══════════ -->
 <div id="public-view" style="display:none">
@@ -75,11 +73,12 @@
 <div id="toast"></div>
 
 <!-- ═══════════ HEADER GLOBAL ═══════════ -->
-<div id="global-header" style="display:none;position:sticky;top:0;z-index:90;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between">
+<div id="global-header" style="display:none;position:sticky;top:0;z-index:90;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;align-items:center;justify-content:space-between">
   <div style="min-width:0;flex:1">
     <div id="gh-local" style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
     <div id="gh-user" style="font-size:10px;color:var(--muted);margin-top:1px"></div>
   </div>
+  <button onclick="confirmLogout()" style="background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted);font-size:18px;padding:6px 8px;flex-shrink:0;line-height:1" title="Cerrar sesión">⏻</button>
 </div>
 
 <!-- ════════════════════════════════════════

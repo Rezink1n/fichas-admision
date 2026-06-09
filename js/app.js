@@ -145,9 +145,14 @@ function toggleVis(inputId, btnId) {
 function logout() {
   _session = null;
   localStorage.removeItem('saved_session');
+  const gh = document.getElementById('global-header');
+  if (gh) gh.style.display = 'none';
   document.getElementById('main-nav').style.display = 'none';
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   showLogin();
+}
+function confirmLogout() {
+  askConfirm('⏻ Cerrar sesión', '¿Seguro que quieres salir?', 'Sí, salir', 'btn-danger', logout);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -174,7 +179,7 @@ async function launchApp() {
   if (adminTitle) adminTitle.innerHTML = isSuperAdmin() ? '🧪 <span>Test</span>' : 'Mi <span>espacio</span>';
   // P4: rellenar header global
   const gh = document.getElementById('global-header');
-  if (gh) gh.style.display = 'flex';
+  if (gh) { gh.style.display = 'flex'; gh.style.alignItems = 'center'; }
 
   // Label usuario
   const displayName = _session?.nombre_completo || _session?.username || '';
