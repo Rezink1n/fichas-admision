@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fichas de Admisión</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+</head>
+<body>
+
+<!-- ═══════════ VISTA PÚBLICA ═══════════ -->
+<div id="public-view" style="display:none">
+  <div id="public-content">
+    <div class="loader" style="min-height:60vh"><div class="spin"></div> Cargando…</div>
+  </div>
+</div>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<div id="login-overlay" class="fsoverlay">
+  <div class="login-box">
+    <div class="login-logo">Fichas <span>·</span> Admin</div>
+    <p id="login-sub" style="text-align:center;color:var(--muted);font-size:12px">Introduce tus credenciales</p>
+    <div id="l-sub" style="display:none"></div>
+    <div class="frow" style="margin:0">
+      <label>Usuario</label>
+      <input id="l-user" class="input" type="text" autocomplete="username" placeholder="usuario"
+        onkeydown="if(event.key==='Enter')document.getElementById('l-pass').focus()">
+    </div>
+    <div class="frow" style="margin:0">
+      <label>Contraseña</label>
+      <div style="position:relative">
+        <input id="l-pass" class="input" type="password" autocomplete="current-password" placeholder="••••••••"
+          style="padding-right:42px" onkeydown="if(event.key==='Enter')submitLogin()">
+        <button onclick="toggleVis('l-pass','eye1')" id="eye1" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px">👁</button>
+      </div>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--muted)">
+      <input type="checkbox" id="l-remember" style="accent-color:var(--accent)"> Recordar en este dispositivo
+    </label>
+    <div class="err-msg" id="l-err"></div>
+    <button class="btn btn-primary btn-block" id="l-btn" onclick="submitLogin()">Entrar</button>
+    <div style="text-align:center">
+      <!-- setup solo via URL secreta: ?setup=fichas-setup-2024 -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SETUP ═══════════ -->
+<div id="setup-overlay" class="fsoverlay">
+  <div class="login-box">
+    <div class="login-logo" style="font-size:22px">⚙️ Configuración</div>
+    <p style="text-align:center;color:var(--muted);font-size:11px;line-height:1.5">Introduce las credenciales de Supabase.<br>Solo se guardan en este dispositivo.</p>
+    <div class="frow" style="margin:0">
+      <label>URL Supabase</label>
+      <input id="s-url" class="input" type="url" placeholder="https://xxxx.supabase.co">
+    </div>
+    <div class="frow" style="margin:0">
+      <label>Anon Key</label>
+      <input id="s-key" class="input" type="password" placeholder="eyJhbGci…"
+        onkeydown="if(event.key==='Enter')submitSetup()">
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;color:var(--muted);line-height:1.6">
+      Usuario por defecto: <strong style="color:var(--accent)">admin</strong> / <strong style="color:var(--accent)">admin1234</strong>
+    </div>
+    <div class="err-msg" id="s-err"></div>
+    <button class="btn btn-primary btn-block" id="s-btn" onclick="submitSetup()">Guardar y conectar</button>
+    <button onclick="showLogin()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px">← Volver al login</button>
+  </div>
+</div>
+
+<!-- ═══════════ TOAST ═══════════ -->
+<div id="toast"></div>
+
+<!-- ════════════════════════════════════════
+     PÁGINA: BUSCAR
+════════════════════════════════════════ -->
+<div id="page-buscar" class="page active">
+  <div class="ph">
+    <div>
+      <h1>Buscar <span>ficha</span></h1>
+      <div class="subtitle" id="buscar-est-name"></div>
+    </div>
+  </div>
+  <div style="padding:20px 20px 0">
+    <div class="card" style="margin:0">
+      <div class="card-body" style="padding-bottom:12px">
+        <div class="frow" style="margin-bottom:8px">
+          <label>UID de la ficha</label>
+          <input class="input" id="uid-input" placeholder="Escribe o pega el UID…"
+            onkeydown="if(event.key==='Enter')buscarFicha()">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="buscarFicha()" style="flex:1">Buscar</button>
+          <button class="btn btn-secondary btn-sm" onclick="clearBuscar()">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="buscar-result" style="margin-top:14px"></div>
+
+  <!-- Info establecimiento para trabajadores -->
+  <div id="est-info-trabajador" style="display:none;margin-top:14px">
+    <div class="card">
+      <div class="card-title">🏪 Mi establecimiento</div>
+      <div class="card-body" id="est-info-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PÁGINA: FICHAS (solo admin+)
+════════════════════════════════════════ -->
+<div id="page-fichas" class="page">
+  <div class="ph">
+    <div>
+      <h1>Base de <span>datos</span></h1>
+      <div class="subtitle" id="fichas-est-name"></div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="reloadFichas()">↺</button>
+  </div>
+  <div class="stats" id="stats" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat"><span class="n" id="s-total">—</span><span class="l">Activas</span></div>
+    <div class="stat"><span class="n" id="s-vend">—</span><span class="l">Vendidas</span></div>
+    <div class="stat"><span class="n" id="s-usad">—</span><span class="l">Usadas</span></div>
+    <div class="stat"><span class="n" id="s-cad">—</span><span class="l">Caducadas</span></div>
+  </div>
+  <div style="padding:0 20px 8px">
+    <input class="input" id="fichas-search" placeholder="Buscar por UID…" oninput="renderFichas()">
+  </div>
+  <div class="filters">
+    <button class="fbtn active" onclick="setFilter('all',this)">Todas</button>
+    <button class="fbtn" onclick="setFilter('emitida',this)">Emitidas</button>
+    <button class="fbtn" onclick="setFilter('vendida',this)">Vendidas</button>
+    <button class="fbtn" onclick="setFilter('usada',this)">Usadas</button>
+    <button class="fbtn" onclick="setFilter('caducada',this)">Caducadas</button>
+    <button class="fbtn" onclick="setFilter('archivo',this)">Archivo</button>
+  </div>
+  <div id="fichas-est-filter-row" style="display:none;padding:0 20px 8px">
+    <select class="input" id="fichas-est-select" onchange="setEstFilter(this.value,this)" style="font-size:11px;padding:7px 10px">
+      <option value="all">🏪 Todos los establecimientos</option>
+    </select>
+  </div>
+  <div class="collapsible-header" id="col-fichas" onclick="toggleCollapse('col-fichas')" style="padding:8px 20px;border-bottom:1px solid var(--border)">
+    <span class="ch-title" style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Lista de fichas</span>
+    <span class="collapsible-arrow open">▼</span>
+  </div>
+  <div class="collapsible-body" id="col-fichas-body">
+    <div id="fichas-list"><div class="loader"><div class="spin"></div> Cargando…</div></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PÁGINA: ADMIN
+════════════════════════════════════════ -->
+<!-- ═══════════ PÁGINA: ADMIN (admin + trabajador) ═══════════ -->
+<div id="page-admin" class="page">
+  <div class="ph">
+    <div>
+      <h1>Mi <span>espacio</span></h1>
+      <div class="subtitle" id="admin-username-label"></div>
+    </div>
+  </div>
+
+  <!-- Emitir ficha -->
+  <div id="section-emitir">
+    <div class="card">
+      <div class="card-title">🪙 Emitir nueva ficha</div>
+      <div class="card-body">
+        <div class="frow"><label>Producto</label><select class="input" id="gen-producto"></select></div>
+        <div class="frow"><label>UID personalizado (opcional)</label><input class="input" id="gen-uid" placeholder="Dejar vacío para generar automático"></div>
+        <button class="btn btn-primary btn-block" onclick="generarFicha()">Emitir ficha + QR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Productos de MI establecimiento -->
+  <div id="section-productos">
+    <div class="card">
+      <div class="card-title">🛒 Productos</div>
+      <div class="card-body" id="productos-list"><div class="loader"><div class="spin"></div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">+ Añadir producto</div>
+      <div class="card-body">
+        <div class="frow"><label>Nombre</label><input class="input" id="p-nombre" placeholder="Ej: Café con leche"></div>
+        <div class="frow"><label>Precio (€)</label><input class="input" id="p-precio" type="number" step="0.10" placeholder="0.00"></div>
+        <div class="frow">
+          <label>Caducidad</label>
+          <select class="input" id="p-cad-tipo" onchange="toggleCadInput()" style="margin-bottom:6px">
+            <option value="meses">Meses desde la venta</option>
+            <option value="dias">Días desde la venta</option>
+            <option value="fecha">Hasta fecha fija</option>
+            <option value="nunca">Nunca caduca</option>
+          </select>
+          <input class="input" id="p-cad-val" type="number" value="3" min="1" placeholder="Cantidad">
+          <input class="input" id="p-cad-fecha" type="date" style="display:none;margin-top:6px">
+        </div>
+        <button class="btn btn-primary btn-block" onclick="addProducto()">Añadir producto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info mi establecimiento (solo lectura para admin) -->
+  <div id="section-est-info">
+    <div class="card">
+      <div class="card-title">🏪 Mi establecimiento</div>
+      <div class="card-body" id="est-info-readonly"></div>
+    </div>
+  </div>
+
+  <!-- Mis usuarios -->
+  <div id="section-usuarios">
+    <div class="card">
+      <div class="card-title">👥 Usuarios</div>
+      <div class="card-body">
+        <div id="admins-list"><div class="loader"><div class="spin"></div></div></div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+          <div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:700">Añadir usuario</div>
+          <div class="frow"><label>Nombre completo</label><input class="input" id="u-fullname" type="text" placeholder="Ana García López"></div>
+          <div class="frow"><label>Usuario</label><input class="input" id="u-name" type="text" placeholder="ana.garcia"></div>
+          <div class="frow"><label>Contraseña</label><input class="input" id="u-pass" type="password" placeholder="Mínimo 8 caracteres"></div>
+          <div class="frow" id="u-role-row"><label>Rol</label>
+            <select class="input" id="u-role"><option value="trabajador">Trabajador</option><option value="admin">Admin</option></select>
+          </div>
+          <div class="frow" id="u-est-row" style="display:none"><label>Establecimiento</label><select class="input" id="u-est"></select></div>
+          <button class="btn btn-primary btn-block" onclick="addAdmin()">Añadir usuario</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cambiar contraseña -->
+  <div class="card">
+    <div class="card-title">🔒 Mi contraseña</div>
+    <div class="card-body">
+      <div class="frow"><label>Nueva contraseña</label><input class="input" id="np1" type="password" placeholder="Mínimo 8 caracteres"></div>
+      <div class="frow"><label>Confirmar</label><input class="input" id="np2" type="password" placeholder="Repite" onkeydown="if(event.key==='Enter')changePassword()"></div>
+      <button class="btn btn-secondary btn-block" onclick="changePassword()">Actualizar contraseña</button>
+    </div>
+  </div>
+  <div style="padding:0 20px 20px">
+    <button class="btn btn-danger btn-block" onclick="logout()">🚪 Cerrar sesión</button>
+  </div>
+</div>
+
+<!-- ═══════════ PÁGINA: ESTABLECIMIENTOS (solo superadmin) ═══════════ -->
+<div id="page-ests" class="page">
+  <div class="ph">
+    <h1>🏢 <span>Establecimientos</span></h1>
+  </div>
+
+  <!-- Lista de establecimientos -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Todos los establecimientos</div>
+    <div class="card-body" id="ests-list"><div class="loader"><div class="spin"></div></div></div>
+  </div>
+
+  <!-- Crear/editar establecimiento -->
+  <div class="card" id="est-form-card">
+    <div class="card-title" id="est-form-title">+ Nuevo establecimiento</div>
+    <div class="card-body">
+      <input type="hidden" id="ne-id">
+      <div class="frow"><label>Nombre</label><input class="input" id="ne-nombre" placeholder="Cafetería Norte"></div>
+      <div class="frow"><label>Dirección</label><input class="input" id="ne-dir" placeholder="Calle…"></div>
+      <div class="frow"><label>Google Maps link</label><input class="input" id="ne-maps" placeholder="https://maps.google.com/…"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="frow" style="margin:0"><label>Máx. admins</label><input class="input" id="ne-maxadm" type="number" value="3" min="1"></div>
+        <div class="frow" style="margin:0"><label>Máx. trabajadores</label><input class="input" id="ne-maxtrab" type="number" value="10" min="1"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-primary" style="flex:1" id="ne-btn" onclick="saveEstablecimientoForm()">Crear</button>
+        <button class="btn btn-secondary btn-sm" id="ne-cancel" onclick="cancelEstForm()" style="display:none">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detalle del establecimiento seleccionado -->
+  <div id="est-detail" style="display:none">
+    <div class="ph" style="margin-top:8px">
+      <div><h1 id="est-detail-nombre" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800"></h1></div>
+      <button class="btn btn-secondary btn-sm" onclick="closeEstDetail()">✕</button>
+    </div>
+    <!-- Stats fichas -->
+    <div class="stats" id="est-detail-stats">
+      <div class="stat"><span class="n" id="ed-total">—</span><span class="l">Total</span></div>
+      <div class="stat"><span class="n" id="ed-vend">—</span><span class="l">Vendidas</span></div>
+      <div class="stat"><span class="n" id="ed-usad">—</span><span class="l">Usadas</span></div>
+      <div class="stat"><span class="n" id="ed-cad">—</span><span class="l">Caducadas</span></div>
+    </div>
+    <!-- Info -->
+    <div class="card"><div class="card-title">ℹ️ Info</div><div class="card-body" id="ed-info"></div></div>
+    <!-- Productos -->
+    <div class="card"><div class="card-title">🛒 Productos</div><div class="card-body" id="ed-productos"></div></div>
+    <!-- Usuarios -->
+    <div class="card"><div class="card-title">👥 Usuarios</div><div class="card-body" id="ed-usuarios"></div></div>
+  </div>
+
+  <!-- Config -->
+  <div class="card" id="section-config">
+    <div class="card-title">🔌 Conexión Supabase</div>
+    <div class="card-body">
+      <div class="frow"><label>URL Supabase</label><input class="input" id="cfg-url" type="password"></div>
+      <div class="frow"><label>Anon Key</label><input class="input" id="cfg-key" type="password"></div>
+      <div class="frow">
+        <label>URL pública (GitHub Pages)</label>
+        <input class="input" id="cfg-baseurl" placeholder="https://usuario.github.io/fichas">
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">QR generará: URL/?uid=FICHA</div>
+      </div>
+      <button class="btn btn-secondary btn-block" onclick="saveConfig()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PÁGINA: USUARIOS GLOBALES (solo superadmin) ═══════════ -->
+<div id="page-users" class="page">
+  <div class="ph"><h1>👥 <span>Usuarios</span></h1></div>
+  <div style="padding:12px 20px 0">
+    <select class="input" id="user-est-filter" onchange="loadAdmins()" style="font-size:11px;padding:7px 10px">
+      <option value="all">🏪 Todos los establecimientos</option>
+    </select>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <div class="card-title">👥 Todos los usuarios</div>
+    <div class="card-body">
+      <div id="admins-list-global"><div class="loader"><div class="spin"></div></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">+ Añadir usuario</div>
+    <div class="card-body">
+      <div class="frow"><label>Nombre completo</label><input class="input" id="ug-fullname" placeholder="Ana García López"></div>
+      <div class="frow"><label>Usuario</label><input class="input" id="ug-name" placeholder="ana.garcia"></div>
+      <div class="frow"><label>Contraseña</label><input class="input" id="ug-pass" type="password" placeholder="Mínimo 8 caracteres"></div>
+      <div class="frow"><label>Rol</label>
+        <select class="input" id="ug-role">
+          <option value="trabajador">Trabajador</option>
+          <option value="admin">Admin</option>
+          <option value="superadmin">Superadmin</option>
+        </select>
+      </div>
+      <div class="frow"><label>Establecimiento</label><select class="input" id="ug-est"></select></div>
+      <button class="btn btn-primary btn-block" onclick="addAdminGlobal()">Añadir usuario</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMACIÓN ACCIÓN -->
+<div class="moverlay" id="confirm-modal" onclick="closeConfirm()" style="z-index:600">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:50vh">
+    <div class="mhandle"></div>
+    <h2 id="confirm-title">¿Confirmar?</h2>
+    <p id="confirm-body" style="color:var(--muted);font-size:13px;margin-bottom:20px;line-height:1.5"></p>
+    <div style="display:flex;gap:8px">
+      <button id="confirm-ok-btn" class="btn btn-primary" style="flex:1" onclick="confirmOK()">Confirmar</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeConfirm()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL QR PRODUCTO/FICHA -->
+<div class="moverlay" id="qr-view-modal" onclick="closeQRView()" style="z-index:400">
+  <div class="modal" onclick="event.stopPropagation()" style="text-align:center">
+    <div class="mhandle"></div>
+    <h2 id="qrv-title">QR</h2>
+    <div id="qrv-img" style="background:#fff;padding:16px;border-radius:10px;display:inline-block;margin:12px 0"></div>
+    <div id="qrv-uid" style="font-size:11px;color:var(--muted);margin-bottom:14px;word-break:break-all"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button id="qrv-dl-btn" class="btn btn-primary btn-sm">⬇ Descargar</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeQRView()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR USUARIO -->
+<div class="moverlay" id="edit-user-modal" onclick="closeEditUser()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mhandle"></div>
+    <h2>Editar usuario</h2>
+    <input type="hidden" id="eu-id">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Usuario: <strong id="eu-username-label" style="color:var(--accent)"></strong></div>
+    <div class="frow"><label>Nombre completo</label><input class="input" id="eu-fullname" placeholder="Nombre Apellido"></div>
+    <div class="frow"><label>Nueva contraseña <span style="color:var(--muted)">(dejar vacío para no cambiar)</span></label>
+      <input class="input" id="eu-pass" type="password" placeholder="Mínimo 8 caracteres">
+    </div>
+    <div class="frow"><label>Confirmar contraseña</label>
+      <input class="input" id="eu-pass2" type="password" placeholder="Repite la contraseña">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-primary" onclick="saveEditUser()" style="flex:1">Guardar</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeEditUser()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav id="main-nav" style="display:none">
+  <button class="active" id="nav-buscar" onclick="showPage('buscar')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    Buscar
+  </button>
+  <button id="nav-fichas" onclick="showPage('fichas')" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+    Datos
+  </button>
+  <button id="nav-ests" onclick="showPage('ests')" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Locales
+  </button>
+  <button id="nav-users" onclick="showPage('users')" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+    Usuarios
+  </button>
+  <button id="nav-admin" onclick="showPage('admin')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg>
+    Admin
+  </button>
+</nav>
+
+<!-- MODAL DETALLE FICHA -->
+<div class="moverlay" id="detail-modal" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mhandle"></div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- MODAL QR -->
+<div class="moverlay" id="qr-modal" onclick="closeQRModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mhandle"></div>
+    <h2>Ficha emitida ✓</h2>
+    <div id="qr-content"></div>
+  </div>
+</div>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/fichas.js"></script>
+  <script src="js/productos.js"></script>
+  <script src="js/establecimientos.js"></script>
+  <script src="js/usuarios.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/utils.js"></script>
+</body>
+</html>
