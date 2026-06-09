@@ -159,6 +159,8 @@ async function launchApp() {
   nav.style.display = 'flex';
   document.getElementById('page-buscar').classList.add('active');
   document.getElementById('nav-fichas').style.display = isAdmin() ? '' : 'none';
+  document.getElementById('nav-ests').style.display  = isSuperAdmin() ? '' : 'none';
+  document.getElementById('nav-users').style.display = isSuperAdmin() ? '' : 'none';
 
   // Label usuario
   const displayName = _session?.nombre_completo || _session?.username || '';
