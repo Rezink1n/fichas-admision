@@ -2,7 +2,10 @@ async function loadAdmins() {
   const el = document.getElementById('admins-list'); if(!el) return;
   try {
     let q = 'admins?order=created_at.asc&select=id,username,nombre_completo,role,activo,last_login,establecimiento_id,establecimientos(nombre)';
-    if (isAdmin() && !isSuperAdmin() && _session?.establecimiento_id)
+    // Superadmin en tab Admin (Test) ve solo su establecimiento de testing
+    if (_session?.establecimiento_id)
+      q += `&establecimiento_id=eq.${_session.establecimiento_id}`;
+    else if (isAdmin() && !isSuperAdmin())
       q += `&establecimiento_id=eq.${_session.establecimiento_id}`;
     const rows = await dbFetch(q) || [];
     const roleColor = {superadmin:'#e8c84a',admin:'#4ab4e8',trabajador:'#4ae8a0'};
@@ -122,12 +125,17 @@ let _confirmCallback = null;
 async function loadAdminsGlobal() {
   const el = document.getElementById('admins-list-global'); if(!el) return;
   const filtEst = document.getElementById('user-est-filter')?.value || 'all';
+  const search  = (document.getElementById('user-search')?.value || '').toLowerCase().trim();
   try {
     let q = 'admins?order=created_at.asc&select=id,username,nombre_completo,role,activo,last_login,establecimiento_id,establecimientos(nombre)';
     if (filtEst !== 'all') q += `&establecimiento_id=eq.${filtEst}`;
     const rows = await dbFetch(q) || [];
     const roleColor = {superadmin:'#e8c84a',admin:'#4ab4e8',trabajador:'#4ae8a0'};
-    el.innerHTML = rows.map(a => {
+    const filtered = search ? rows.filter(a =>
+      a.username.toLowerCase().includes(search) ||
+      (a.nombre_completo||'').toLowerCase().includes(search)
+    ) : rows;
+    el.innerHTML = filtered.map(a => {
       const esMismo = a.username === _session?.username;
       return `<div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)">
         <div style="flex:1;min-width:0">
@@ -171,4 +179,15 @@ async function addAdminGlobal() {
     toast(`Usuario "${username}" creado ✓`,'ok');
     loadAdminsGlobal();
   } catch(e) { toast('Error: '+(e.message.includes('duplicate')?'Ese usuario ya existe':e.message),'err'); }
+}
+
+// ══ Ir a pestaña usuarios y buscar por login ══
+function gotoUserSearch(username) {
+  showPage('users');
+  const input = document.getElementById('user-search');
+  if (input) {
+    input.value = username;
+    loadAdminsGlobal();
+    setTimeout(() => input.scrollIntoView({behavior:'smooth'}), 200);
+  }
 }

@@ -109,12 +109,28 @@ async function updateProducto(prodId) {
 // ══════════════════════════════════════════════════════════
 //  EDITAR USUARIO (P5)
 // ══════════════════════════════════════════════════════════
-function editUserModal(id, fullname, username) {
+async function editUserModal(id, fullname, username) {
   document.getElementById('eu-id').value = id;
   document.getElementById('eu-fullname').value = fullname || '';
   document.getElementById('eu-username-label').textContent = username;
   document.getElementById('eu-pass').value = '';
   document.getElementById('eu-pass2').value = '';
+  // Cargar establecimiento actual del usuario
+  const estRow = document.getElementById('eu-est-row');
+  const estSel = document.getElementById('eu-est');
+  if (isSuperAdmin() && estRow && estSel) {
+    estRow.style.display = '';
+    // Obtener establecimiento_id actual
+    try {
+      const rows = await dbFetch(`admins?id=eq.${id}&select=establecimiento_id`);
+      const currentEstId = rows?.[0]?.establecimiento_id || '';
+      const opts = '<option value="">Sin establecimiento</option>' +
+        (_todosEsts||[]).map(e=>`<option value="${e.id}" ${e.id===currentEstId?'selected':''}>${e.nombre}</option>`).join('');
+      estSel.innerHTML = opts;
+    } catch(e) {}
+  } else if (estRow) {
+    estRow.style.display = 'none';
+  }
   document.getElementById('edit-user-modal').classList.add('open');
 }
 function closeEditUser() {
@@ -135,12 +151,18 @@ async function saveEditUser() {
     const label = document.getElementById('eu-username-label').textContent;
     patch.password_hash = await sha256(label + ':' + pass);
   }
+  // Establecimiento (solo superadmin)
+  if (isSuperAdmin()) {
+    const estSel = document.getElementById('eu-est');
+    if (estSel) patch.establecimiento_id = estSel.value || null;
+  }
   if (!Object.keys(patch).length) { toast('Sin cambios','err'); return; }
   try {
     await dbFetch(`admins?id=eq.${id}`, {method:'PATCH', body:JSON.stringify(patch)});
     toast('Usuario actualizado ✓','ok');
     closeEditUser();
     loadAdmins();
+    if (typeof loadAdminsGlobal === 'function') loadAdminsGlobal();
   } catch(e) { toast('Error: '+e.message,'err'); }
 }
 

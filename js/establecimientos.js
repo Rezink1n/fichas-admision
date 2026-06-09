@@ -23,20 +23,20 @@ async function loadEstablecimientos() {
   try {
     _todosEsts = await dbFetch('establecimientos?order=nombre.asc') || [];
     el.innerHTML = _todosEsts.map((e,i) => `
-      <div class="card" style="margin-top:${i===0?'0':'8px'}">
-        <div class="collapsible-header" id="est-col-${e.id}" onclick="toggleCollapse('est-col-${e.id}')"
-          style="padding:12px 16px;background:var(--surface2)">
+      <div class="est-card">
+        <div class="est-card-header" onclick="toggleCollapse('est-col-${e.id}')">
+          <div class="est-card-icon">${e.protegido?'🔒':'🏪'}</div>
           <div style="flex:1;min-width:0">
-            <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700">${e.nombre}${e.protegido?' 🔒':''}</div>
-            <div style="font-size:10px;color:var(--muted)">${e.direccion||'Sin dirección'}</div>
+            <div class="est-card-name">${e.nombre}</div>
+            <div class="est-card-sub">${e.direccion||'Sin dirección'} · ${e.max_admins||3} admins · ${e.max_trabajadores||10} trabajadores</div>
           </div>
-          <span class="collapsible-arrow" style="margin-left:8px">▼</span>
+          <span class="collapsible-arrow">▼</span>
         </div>
         <div class="collapsible-body collapsed" id="est-col-${e.id}-body" style="max-height:0">
-          <div style="padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border)">
-            <button onclick="showEstDetail('${e.id}')" class="btn btn-secondary btn-sm" style="font-size:11px">👁 Ver detalle</button>
-            <button onclick="editEstForm('${e.id}')" class="btn btn-secondary btn-sm" style="font-size:11px">✏️ Editar</button>
-            ${e.protegido ? '<span style="font-size:10px;color:var(--muted)">Establecimiento protegido</span>' : `<button data-eid="${e.id}" onclick="deleteEstConfirm(this.dataset.eid)" class="btn btn-danger btn-sm" style="font-size:11px">🗑 Eliminar</button>`}
+          <div class="est-card-actions">
+            <button onclick="showEstDetail('${e.id}')" class="btn btn-secondary btn-sm">👁 Ver detalle</button>
+            <button onclick="editEstForm('${e.id}')" class="btn btn-secondary btn-sm">✏️ Editar</button>
+            ${e.protegido ? '<span style="font-size:10px;color:var(--muted);align-self:center">Protegido</span>' : `<button data-eid="${e.id}" onclick="deleteEstConfirm(this.dataset.eid)" class="btn btn-danger btn-sm">🗑 Eliminar</button>`}
           </div>
         </div>
       </div>`).join('') || '<div style="color:var(--muted);font-size:12px;padding:20px">Sin establecimientos</div>';
@@ -231,7 +231,8 @@ async function showEstDetail(estId) {
       ? (users||[]).map(u=>`<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--border)">
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:600">${u.nombre_completo||u.username}</div>
-            <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+            <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap">
+              <button onclick="gotoUserSearch('${u.username}')" style="background:none;border:none;cursor:pointer;font-family:'DM Mono';font-size:10px;color:var(--accent);padding:0">@${u.username}</button>
               <span style="font-size:9px;padding:2px 6px;border-radius:4px;background:${roleColor[u.role]}22;color:${roleColor[u.role]};border:1px solid ${roleColor[u.role]}44">${u.role}</span>
               ${!u.activo?'<span style="font-size:9px;color:var(--danger)">● INACTIVO</span>':''}
             </div>

@@ -322,7 +322,10 @@
   </div>
 
   <!-- 2. Lista con filtro — SEGUNDO -->
-  <div style="padding:12px 20px 8px">
+  <div style="padding:12px 20px 8px;display:flex;gap:8px">
+    <input class="input" id="user-search" placeholder="🔍 Buscar por login o nombre…" oninput="loadAdminsGlobal()" style="flex:1">
+  </div>
+  <div style="padding:0 20px 8px">
     <select class="input" id="user-est-filter" onchange="loadAdminsGlobal()" style="font-size:11px;padding:7px 10px">
       <option value="all">🏪 Todos los establecimientos</option>
     </select>
@@ -402,9 +405,13 @@
     <div class="mhandle"></div>
     <h2>Editar usuario</h2>
     <input type="hidden" id="eu-id">
-    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Usuario: <strong id="eu-username-label" style="color:var(--accent)"></strong></div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Login: <strong id="eu-username-label" style="color:var(--accent)"></strong></div>
     <div class="frow"><label>Nombre completo</label><input class="input" id="eu-fullname" placeholder="Nombre Apellido"></div>
-    <div class="frow"><label>Nueva contraseña <span style="color:var(--muted)">(dejar vacío para no cambiar)</span></label>
+    <div class="frow" id="eu-est-row" style="display:none">
+      <label>Establecimiento</label>
+      <select class="input" id="eu-est"><option value="">Sin establecimiento</option></select>
+    </div>
+    <div class="frow"><label>Nueva contraseña <span style="color:var(--muted)">(vacío = no cambiar)</span></label>
       <input class="input" id="eu-pass" type="password" placeholder="Mínimo 8 caracteres">
     </div>
     <div class="frow"><label>Confirmar contraseña</label>
