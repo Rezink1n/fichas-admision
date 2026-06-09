@@ -22,16 +22,24 @@ async function loadEstablecimientos() {
   const el = document.getElementById('ests-list'); if(!el)return;
   try {
     _todosEsts = await dbFetch('establecimientos?order=nombre.asc') || [];
-    el.innerHTML = _todosEsts.map(e=>`
-      <div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)">
-        <div style="flex:1;min-width:0">
-          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700">${e.nombre}</div>
-          <div style="font-size:10px;color:var(--muted)">${e.direccion||'Sin dirección'}</div>
+    el.innerHTML = _todosEsts.map((e,i) => `
+      <div class="card" style="margin-top:${i===0?'0':'8px'}">
+        <div class="collapsible-header" id="est-col-${e.id}" onclick="toggleCollapse('est-col-${e.id}')"
+          style="padding:12px 16px;background:var(--surface2)">
+          <div style="flex:1;min-width:0">
+            <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700">${e.nombre}${e.protegido?' 🔒':''}</div>
+            <div style="font-size:10px;color:var(--muted)">${e.direccion||'Sin dirección'}</div>
+          </div>
+          <span class="collapsible-arrow" style="margin-left:8px">▼</span>
         </div>
-        <button onclick="showEstDetail('${e.id}')" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 8px">👁</button>
-        <button onclick="editEstForm('${e.id}')" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 8px">✏️</button>
-        ${e.protegido ? '' : `<button data-eid="${e.id}" onclick="deleteEstConfirm(this.dataset.eid)" class="btn btn-danger btn-sm" style="font-size:10px;padding:4px 8px">🗑</button>`}
-      </div>`).join('') || '<div style="color:var(--muted);font-size:12px">Sin establecimientos</div>';
+        <div class="collapsible-body collapsed" id="est-col-${e.id}-body" style="max-height:0">
+          <div style="padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border)">
+            <button onclick="showEstDetail('${e.id}')" class="btn btn-secondary btn-sm" style="font-size:11px">👁 Ver detalle</button>
+            <button onclick="editEstForm('${e.id}')" class="btn btn-secondary btn-sm" style="font-size:11px">✏️ Editar</button>
+            ${e.protegido ? '<span style="font-size:10px;color:var(--muted)">Establecimiento protegido</span>' : `<button data-eid="${e.id}" onclick="deleteEstConfirm(this.dataset.eid)" class="btn btn-danger btn-sm" style="font-size:11px">🗑 Eliminar</button>`}
+          </div>
+        </div>
+      </div>`).join('') || '<div style="color:var(--muted);font-size:12px;padding:20px">Sin establecimientos</div>';
     // Rellenar select de establecimientos en form de usuario
     const sel = document.getElementById('u-est');
     if (sel) sel.innerHTML = _todosEsts.map(e=>`<option value="${e.id}">${e.nombre}</option>`).join('');
@@ -220,17 +228,46 @@ async function showEstDetail(estId) {
     const users = await dbFetch(`admins?establecimiento_id=eq.${estId}&select=username,nombre_completo,role,activo`);
     const roleColor = {superadmin:'#e8c84a',admin:'#4ab4e8',trabajador:'#4ae8a0'};
     document.getElementById('ed-usuarios').innerHTML = (users||[]).length
-      ? (users||[]).map(u=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
-          <div style="flex:1;font-size:13px">${u.nombre_completo||u.username}</div>
-          <span style="font-size:9px;padding:2px 6px;border-radius:4px;background:${roleColor[u.role]}22;color:${roleColor[u.role]};border:1px solid ${roleColor[u.role]}44">${u.role}</span>
-          ${!u.activo?'<span style="font-size:9px;color:var(--danger)">●</span>':''}
+      ? (users||[]).map(u=>`<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600">${u.nombre_completo||u.username}</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+              <span style="font-size:9px;padding:2px 6px;border-radius:4px;background:${roleColor[u.role]}22;color:${roleColor[u.role]};border:1px solid ${roleColor[u.role]}44">${u.role}</span>
+              ${!u.activo?'<span style="font-size:9px;color:var(--danger)">● INACTIVO</span>':''}
+            </div>
+          </div>
+          <button onclick="editUserModal('${u.id}','${(u.nombre_completo||'').replace(/'/g,'')}','${u.username}')" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 6px">✏️</button>
+          <button onclick="toggleAdmin('${u.id}',${!u.activo})" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 6px">${u.activo?'🔒':'✓'}</button>
+          <button onclick="deleteAdmin('${u.id}','${u.username}')" class="btn btn-danger btn-sm" style="font-size:10px;padding:4px 6px">🗑</button>
         </div>`).join('')
       : '<div style="color:var(--muted);font-size:12px">Sin usuarios</div>';
   } catch(e) {}
 
+  document.getElementById('ed-u-estid').value = estId;
   document.getElementById('est-detail').scrollIntoView({behavior:'smooth'});
 }
 
 function closeEstDetail() {
   document.getElementById('est-detail').style.display = 'none';
+}
+
+// ══ Añadir usuario a un establecimiento desde su detalle ══
+async function addAdminToEst() {
+  const estId    = document.getElementById('ed-u-estid').value;
+  const username = document.getElementById('ed-u-name').value.trim().toLowerCase();
+  const pass     = document.getElementById('ed-u-pass').value;
+  const role     = document.getElementById('ed-u-role').value;
+  const fullname = document.getElementById('ed-u-fullname').value.trim();
+  if (!username || pass.length < 8) { toast('Completa todos los campos (mín 8 chars)','err'); return; }
+  try {
+    const hash = await sha256(username + ':' + pass);
+    const body = {username, password_hash:hash, role, establecimiento_id:estId};
+    if (fullname) body.nombre_completo = fullname;
+    await dbFetch('admins',{method:'POST',body:JSON.stringify(body)});
+    document.getElementById('ed-u-name').value='';
+    document.getElementById('ed-u-pass').value='';
+    document.getElementById('ed-u-fullname').value='';
+    toast(`Usuario "${username}" creado ✓`,'ok');
+    showEstDetail(estId); // recargar detalle
+  } catch(e) { toast('Error: '+(e.message.includes('duplicate')?'Usuario ya existe':e.message),'err'); }
 }

@@ -159,7 +159,7 @@
 <div id="page-admin" class="page">
   <div class="ph">
     <div>
-      <h1>Mi <span>espacio</span></h1>
+      <h1 id="admin-page-title">Mi <span>espacio</span></h1>
       <div class="subtitle" id="admin-username-label"></div>
     </div>
   </div>
@@ -232,34 +232,14 @@
     </div>
   </div>
 
-  <!-- Cambiar contraseña -->
-  <div class="card">
-    <div class="card-title">🔒 Mi contraseña</div>
-    <div class="card-body">
-      <div class="frow"><label>Nueva contraseña</label><input class="input" id="np1" type="password" placeholder="Mínimo 8 caracteres"></div>
-      <div class="frow"><label>Confirmar</label><input class="input" id="np2" type="password" placeholder="Repite" onkeydown="if(event.key==='Enter')changePassword()"></div>
-      <button class="btn btn-secondary btn-block" onclick="changePassword()">Actualizar contraseña</button>
-    </div>
-  </div>
-  <div style="padding:0 20px 20px">
-    <button class="btn btn-danger btn-block" onclick="logout()">🚪 Cerrar sesión</button>
-  </div>
 </div>
 
 <!-- ═══════════ PÁGINA: ESTABLECIMIENTOS (solo superadmin) ═══════════ -->
 <div id="page-ests" class="page">
-  <div class="ph">
-    <h1>🏢 <span>Establecimientos</span></h1>
-  </div>
+  <div class="ph"><h1>🏢 <span>Locales</span></h1></div>
 
-  <!-- Lista de establecimientos -->
-  <div class="card" style="margin-top:16px">
-    <div class="card-title">Todos los establecimientos</div>
-    <div class="card-body" id="ests-list"><div class="loader"><div class="spin"></div></div></div>
-  </div>
-
-  <!-- Crear/editar establecimiento -->
-  <div class="card" id="est-form-card">
+  <!-- 1. Crear/editar establecimiento — PRIMERO -->
+  <div class="card" id="est-form-card" style="margin-top:16px">
     <div class="card-title" id="est-form-title">+ Nuevo establecimiento</div>
     <div class="card-body">
       <input type="hidden" id="ne-id">
@@ -277,28 +257,99 @@
     </div>
   </div>
 
-  <!-- Detalle del establecimiento seleccionado -->
+  <!-- 2. Lista de establecimientos colapsables — SEGUNDO -->
+  <div id="ests-list" style="padding-bottom:8px"></div>
+
+  <!-- 3. Detalle del establecimiento seleccionado — TERCERO -->
   <div id="est-detail" style="display:none">
-    <div class="ph" style="margin-top:8px">
+    <div class="ph" style="margin-top:8px;padding-top:8px;border-top:2px solid var(--accent)">
       <div><h1 id="est-detail-nombre" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800"></h1></div>
-      <button class="btn btn-secondary btn-sm" onclick="closeEstDetail()">✕</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeEstDetail()">✕ Cerrar</button>
     </div>
-    <!-- Stats fichas -->
-    <div class="stats" id="est-detail-stats">
+    <div class="stats">
       <div class="stat"><span class="n" id="ed-total">—</span><span class="l">Total</span></div>
       <div class="stat"><span class="n" id="ed-vend">—</span><span class="l">Vendidas</span></div>
       <div class="stat"><span class="n" id="ed-usad">—</span><span class="l">Usadas</span></div>
       <div class="stat"><span class="n" id="ed-cad">—</span><span class="l">Caducadas</span></div>
     </div>
-    <!-- Info -->
     <div class="card"><div class="card-title">ℹ️ Info</div><div class="card-body" id="ed-info"></div></div>
-    <!-- Productos -->
     <div class="card"><div class="card-title">🛒 Productos</div><div class="card-body" id="ed-productos"></div></div>
-    <!-- Usuarios -->
-    <div class="card"><div class="card-title">👥 Usuarios</div><div class="card-body" id="ed-usuarios"></div></div>
+    <!-- Usuarios del establecimiento con gestión completa -->
+    <div class="card">
+      <div class="card-title">👥 Usuarios del local</div>
+      <div class="card-body">
+        <div id="ed-usuarios"></div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:8px">
+          <div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:700">Añadir usuario a este local</div>
+          <div class="frow"><label>Nombre completo</label><input class="input" id="ed-u-fullname" placeholder="Ana García"></div>
+          <div class="frow"><label>Usuario</label><input class="input" id="ed-u-name" placeholder="ana.garcia"></div>
+          <div class="frow"><label>Contraseña</label><input class="input" id="ed-u-pass" type="password" placeholder="Mínimo 8 caracteres"></div>
+          <div class="frow"><label>Rol</label>
+            <select class="input" id="ed-u-role">
+              <option value="trabajador">Trabajador</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <input type="hidden" id="ed-u-estid">
+          <button class="btn btn-primary btn-block" onclick="addAdminToEst()">Añadir usuario</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PÁGINA: USUARIOS GLOBALES (solo superadmin) ═══════════ -->
+<div id="page-users" class="page">
+  <div class="ph"><h1>👥 <span>Usuarios</span></h1></div>
+
+  <!-- 1. Crear usuario — PRIMERO -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">+ Añadir usuario</div>
+    <div class="card-body">
+      <div class="frow"><label>Nombre completo</label><input class="input" id="ug-fullname" placeholder="Ana García López"></div>
+      <div class="frow"><label>Usuario (login)</label><input class="input" id="ug-name" placeholder="ana.garcia"></div>
+      <div class="frow"><label>Contraseña</label><input class="input" id="ug-pass" type="password" placeholder="Mínimo 8 caracteres"></div>
+      <div class="frow"><label>Rol</label>
+        <select class="input" id="ug-role">
+          <option value="trabajador">Trabajador</option>
+          <option value="admin">Admin</option>
+          <option value="superadmin">Superadmin</option>
+        </select>
+      </div>
+      <div class="frow"><label>Establecimiento</label><select class="input" id="ug-est"><option value="">Sin establecimiento</option></select></div>
+      <button class="btn btn-primary btn-block" onclick="addAdminGlobal()">Añadir usuario</button>
+    </div>
   </div>
 
-  <!-- Config -->
+  <!-- 2. Lista con filtro — SEGUNDO -->
+  <div style="padding:12px 20px 8px">
+    <select class="input" id="user-est-filter" onchange="loadAdminsGlobal()" style="font-size:11px;padding:7px 10px">
+      <option value="all">🏪 Todos los establecimientos</option>
+    </select>
+  </div>
+  <div class="card">
+    <div class="card-title">👥 Todos los usuarios</div>
+    <div class="card-body">
+      <div id="admins-list-global"><div class="loader"><div class="spin"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PÁGINA: AJUSTES ═══════════ -->
+<div id="page-settings" class="page">
+  <div class="ph"><h1>⚙️ <span>Ajustes</span></h1></div>
+
+  <!-- Cambiar contraseña -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">🔒 Cambiar mi contraseña</div>
+    <div class="card-body">
+      <div class="frow"><label>Nueva contraseña</label><input class="input" id="np1" type="password" placeholder="Mínimo 8 caracteres"></div>
+      <div class="frow"><label>Confirmar</label><input class="input" id="np2" type="password" placeholder="Repite" onkeydown="if(event.key==='Enter')changePassword()"></div>
+      <button class="btn btn-secondary btn-block" onclick="changePassword()">Actualizar contraseña</button>
+    </div>
+  </div>
+
+  <!-- Config Supabase (solo superadmin) -->
   <div class="card" id="section-config">
     <div class="card-title">🔌 Conexión Supabase</div>
     <div class="card-body">
@@ -312,38 +363,9 @@
       <button class="btn btn-secondary btn-block" onclick="saveConfig()">Guardar</button>
     </div>
   </div>
-</div>
 
-<!-- ═══════════ PÁGINA: USUARIOS GLOBALES (solo superadmin) ═══════════ -->
-<div id="page-users" class="page">
-  <div class="ph"><h1>👥 <span>Usuarios</span></h1></div>
-  <div style="padding:12px 20px 0">
-    <select class="input" id="user-est-filter" onchange="loadAdmins()" style="font-size:11px;padding:7px 10px">
-      <option value="all">🏪 Todos los establecimientos</option>
-    </select>
-  </div>
-  <div class="card" style="margin-top:12px">
-    <div class="card-title">👥 Todos los usuarios</div>
-    <div class="card-body">
-      <div id="admins-list-global"><div class="loader"><div class="spin"></div></div></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">+ Añadir usuario</div>
-    <div class="card-body">
-      <div class="frow"><label>Nombre completo</label><input class="input" id="ug-fullname" placeholder="Ana García López"></div>
-      <div class="frow"><label>Usuario</label><input class="input" id="ug-name" placeholder="ana.garcia"></div>
-      <div class="frow"><label>Contraseña</label><input class="input" id="ug-pass" type="password" placeholder="Mínimo 8 caracteres"></div>
-      <div class="frow"><label>Rol</label>
-        <select class="input" id="ug-role">
-          <option value="trabajador">Trabajador</option>
-          <option value="admin">Admin</option>
-          <option value="superadmin">Superadmin</option>
-        </select>
-      </div>
-      <div class="frow"><label>Establecimiento</label><select class="input" id="ug-est"></select></div>
-      <button class="btn btn-primary btn-block" onclick="addAdminGlobal()">Añadir usuario</button>
-    </div>
+  <div style="padding:0 20px 20px;margin-top:8px">
+    <button class="btn btn-danger btn-block" onclick="logout()">🚪 Cerrar sesión</button>
   </div>
 </div>
 
@@ -415,7 +437,11 @@
   </button>
   <button id="nav-admin" onclick="showPage('admin')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg>
-    Admin
+    <span id="nav-admin-label">Admin</span>
+  </button>
+  <button id="nav-settings" onclick="showPage('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+    Ajustes
   </button>
 </nav>
 

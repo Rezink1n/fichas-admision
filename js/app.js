@@ -161,6 +161,11 @@ async function launchApp() {
   document.getElementById('nav-fichas').style.display = isAdmin() ? '' : 'none';
   document.getElementById('nav-ests').style.display  = isSuperAdmin() ? '' : 'none';
   document.getElementById('nav-users').style.display = isSuperAdmin() ? '' : 'none';
+  // Renombrar pestaña admin a "Test" para superadmin
+  const adminLabel = document.getElementById('nav-admin-label');
+  if (adminLabel) adminLabel.textContent = isSuperAdmin() ? 'Test' : 'Admin';
+  const adminTitle = document.getElementById('admin-page-title');
+  if (adminTitle) adminTitle.innerHTML = isSuperAdmin() ? '🧪 <span>Test</span>' : 'Mi <span>espacio</span>';
 
   // Label usuario
   const displayName = _session?.nombre_completo || _session?.username || '';
