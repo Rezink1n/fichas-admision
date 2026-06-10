@@ -213,8 +213,10 @@ function setFilter(f, btn) {
 }
 function setEstFilter(estId, btn) {
   currentEstFilter = estId;
+  currentProdFilter = 'all'; // reset filtro producto al cambiar est
   document.querySelectorAll('.fbtn-est').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); renderFichas();
+  document.querySelectorAll('.fbtn-prod').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderFichas(); renderProdFilters();
 }
 function setProdFilter(nombre, btn) {
   currentProdFilter = nombre;

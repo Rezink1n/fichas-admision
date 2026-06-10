@@ -257,8 +257,30 @@ async function launchApp() {
               <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)">${e.max_trabajadores||10}</div></div>
           </div>` : ''}
         `;
+        window._estInfoLoaded = true;
       }
-    } catch(e) {}
+    } catch(e) {
+      // Si falla, intentar mostrar algo útil en el modal
+      const estBodyEl = document.getElementById('est-info-body');
+      if (estBodyEl && !estBodyEl.innerHTML.trim()) {
+        estBodyEl.innerHTML = '<div style="color:var(--muted);font-size:12px">Cargando información…</div>';
+        // Reintentar
+        try {
+          const r2 = await dbFetch(`establecimientos?id=eq.${_session.establecimiento_id}&select=nombre,direccion,maps_link,max_admins,max_trabajadores`);
+          if (r2?.[0]) {
+            const e = r2[0];
+            estBodyEl.innerHTML = `
+              <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:6px">${e.nombre}</div>
+              ${e.direccion?`<div style="font-size:12px;color:var(--muted);margin-bottom:4px">📍 ${e.direccion}</div>`:''}
+              ${e.maps_link?`<a href="${e.maps_link}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none;display:inline-flex">🗺 Google Maps</a>`:''}
+              <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div><div style="font-size:9px;color:var(--muted)">MÁX ADMINS</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent)">${e.max_admins||3}</div></div>
+                <div><div style="font-size:9px;color:var(--muted)">MÁX TRAB.</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent)">${e.max_trabajadores||10}</div></div>
+              </div>`;
+          }
+        } catch(e2) {}
+      }
+    }
   }
 
   await checkCaducadas();

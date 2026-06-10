@@ -72,21 +72,30 @@ async function deleteProductoModal() {
 // ── Usuario modal (page-admin) ──
 function openUsuarioModal(user = null) {
   const isEdit = !!user;
-  document.getElementById('modal-user-title').textContent = isEdit ? '✏️ Editar usuario' : '👤 Nuevo usuario';
-  document.getElementById('u-edit-id').value   = user?.id || '';
-  document.getElementById('u-fullname').value  = user?.nombre_completo || '';
-  document.getElementById('u-name').value      = user?.username || '';
-  document.getElementById('u-name').disabled   = isEdit; // no cambiar login
+  // Limpiar SIEMPRE antes de rellenar
+  document.getElementById('u-edit-id').value   = '';
+  document.getElementById('u-fullname').value  = '';
+  document.getElementById('u-name').value      = '';
+  document.getElementById('u-name').disabled   = false;
   document.getElementById('u-pass').value      = '';
-  document.getElementById('u-pass-label').textContent = isEdit ? '(vacío = no cambiar)' : '(mínimo 8 caracteres)';
-  document.getElementById('u-pass2-row').style.display = '';
-  const passInput = document.getElementById('u-pass');
-  passInput.placeholder = isEdit ? 'Vacío para no cambiar' : 'Mínimo 8 caracteres';
-  document.getElementById('u-del-btn').style.display = isEdit ? '' : 'none';
-  // Rol
+  document.getElementById('u-pass').placeholder = 'Mínimo 8 caracteres';
+  document.getElementById('u-del-btn').style.display = 'none';
   const roleEl = document.getElementById('u-role');
-  if (roleEl && user?.role) roleEl.value = user.role;
-  // Est
+  if (roleEl) roleEl.value = 'trabajador';
+  // Ahora rellenar si es editar
+  document.getElementById('modal-user-title').textContent = isEdit ? '✏️ Editar usuario' : '👤 Nuevo usuario';
+  if (isEdit) {
+    document.getElementById('u-edit-id').value   = user.id || '';
+    document.getElementById('u-fullname').value  = user.nombre_completo || '';
+    document.getElementById('u-name').value      = user.username || '';
+    document.getElementById('u-name').disabled   = true;
+    document.getElementById('u-pass').placeholder = 'Vacío para no cambiar';
+    document.getElementById('u-del-btn').style.display = '';
+    if (roleEl && user.role) roleEl.value = user.role;
+    try { document.getElementById('u-pass-label').textContent = '(vacío = no cambiar)'; } catch(e){}
+  } else {
+    try { document.getElementById('u-pass-label').textContent = '(mínimo 8 caracteres)'; } catch(e){}
+  }
   const estRow = document.getElementById('u-est-row');
   if (estRow) estRow.style.display = isSuperAdmin() ? '' : 'none';
   openModal('modal-usuario');
@@ -137,18 +146,30 @@ async function deleteUsuarioModal() {
 // ── Usuario global modal (page-users) ──
 function openUsuarioGlobalModal(user = null) {
   const isEdit = !!user;
-  document.getElementById('modal-ug-title').textContent = isEdit ? '✏️ Editar usuario' : '👤 Nuevo usuario';
-  document.getElementById('ug-edit-id').value  = user?.id || '';
-  document.getElementById('ug-fullname').value = user?.nombre_completo || '';
-  document.getElementById('ug-name').value     = user?.username || '';
-  document.getElementById('ug-name').disabled  = isEdit;
+  // Limpiar SIEMPRE
+  document.getElementById('ug-edit-id').value  = '';
+  document.getElementById('ug-fullname').value = '';
+  document.getElementById('ug-name').value     = '';
+  document.getElementById('ug-name').disabled  = false;
   document.getElementById('ug-pass').value     = '';
-  document.getElementById('ug-pass').placeholder = isEdit ? 'Vacío para no cambiar' : 'Mínimo 8 caracteres';
-  document.getElementById('ug-del-btn').style.display = isEdit ? '' : 'none';
+  document.getElementById('ug-pass').placeholder = 'Mínimo 8 caracteres';
+  document.getElementById('ug-del-btn').style.display = 'none';
   const roleEl = document.getElementById('ug-role');
-  if (roleEl && user?.role) roleEl.value = user.role;
+  if (roleEl) roleEl.value = 'trabajador';
   const estEl = document.getElementById('ug-est');
-  if (estEl && user?.establecimiento_id) estEl.value = user.establecimiento_id;
+  if (estEl) estEl.value = '';
+  // Rellenar si editar
+  document.getElementById('modal-ug-title').textContent = isEdit ? '✏️ Editar usuario' : '👤 Nuevo usuario';
+  if (isEdit) {
+    document.getElementById('ug-edit-id').value  = user.id || '';
+    document.getElementById('ug-fullname').value = user.nombre_completo || '';
+    document.getElementById('ug-name').value     = user.username || '';
+    document.getElementById('ug-name').disabled  = true;
+    document.getElementById('ug-pass').placeholder = 'Vacío para no cambiar';
+    document.getElementById('ug-del-btn').style.display = '';
+    if (roleEl && user.role) roleEl.value = user.role;
+    if (estEl && user.establecimiento_id) estEl.value = user.establecimiento_id;
+  }
   openModal('modal-usuario-global');
 }
 async function saveUsuarioGlobalModal() {
