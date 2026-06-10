@@ -220,17 +220,32 @@ function setEstFilter(estId, btn) {
 }
 // setProdFilter reemplazado por setProdFilterAll y setProdFilterByIdx
 
+function pNombreFromFicha(f) {
+  const snap = f.producto_snapshot ? JSON.parse(f.producto_snapshot) : null;
+  return (f.estado !== 'emitida' && snap?.nombre) ? snap.nombre : (f.productos?.nombre || '');
+}
+
 function renderProdFilters() {
   const el = document.getElementById('fichas-prod-filter-row');
   if (!el) return;
-  const nombres = [...new Set(allFichas.map(f => {
-    const snap = f.producto_snapshot ? JSON.parse(f.producto_snapshot) : null;
-    return (f.estado!=='emitida' && snap?.nombre) ? snap.nombre : (f.productos?.nombre||'');
-  }).filter(Boolean))].sort();
-  if (nombres.length <= 1) { el.style.display='none'; return; }
+  if (isSuperAdmin() && currentEstFilter === 'all') { el.style.display = 'none'; return; }
+  const fichasFilt = currentEstFilter === 'all' ? allFichas
+    : allFichas.filter(f => f.establecimiento_id === currentEstFilter);
+  const nombres = [...new Set(fichasFilt.map(pNombreFromFicha).filter(Boolean))].sort();
+  if (nombres.length <= 1) { el.style.display = 'none'; return; }
   el.style.display = '';
-  el.innerHTML = `<button class="fbtn fbtn-prod ${currentProdFilter==='all'?'active':''}" onclick="setProdFilter('all',this)">Todos</button>`
-    + nombres.map(n=>`<button class="fbtn fbtn-prod ${currentProdFilter===n?'active':''}" onclick="setProdFilter(${JSON.stringify(n)},this)">${n}</button>`).join('');
+  window._prodFiltNombres = nombres;
+  el.innerHTML = `<button class="fbtn fbtn-prod ${currentProdFilter==='all'?'active':''}"
+      onclick="filtrarProd('all',this)">🛒 Todos</button>` +
+    nombres.map(n => `<button class="fbtn fbtn-prod ${currentProdFilter===n?'active':''}"
+      onclick="filtrarProd(this.dataset.n,this)" data-n="${n.replace(/"/g,'&quot;')}">${n}</button>`).join('');
+}
+
+function filtrarProd(nombre, btn) {
+  currentProdFilter = nombre;
+  document.querySelectorAll('.fbtn-prod').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFichas();
 }
 
 function fichaCardHTML(f) {
@@ -254,11 +269,7 @@ function renderFichas() {
   else if (currentFilter !== 'all') list = list.filter(f=>f.estado===currentFilter);
   if (currentEstFilter !== 'all') list = list.filter(f=>f.establecimiento_id===currentEstFilter || (!f.establecimiento_id && currentEstFilter==='__sin__'));
   if (currentProdFilter !== 'all') {
-    list = list.filter(f => {
-      const snap = f.producto_snapshot ? JSON.parse(f.producto_snapshot) : null;
-      const pNombre = (f.estado!=='emitida' && snap?.nombre) ? snap.nombre : (f.productos?.nombre||'');
-      return pNombre === currentProdFilter;
-    });
+    list = list.filter(f => pNombreFromFicha(f) === currentProdFilter);
   }
   if (q) list = list.filter(f=>f.uid.toLowerCase().includes(q));
   if (!list.length) { document.getElementById('fichas-list').innerHTML='<div class="empty">Sin fichas</div>'; return; }

@@ -21,7 +21,7 @@ let _todosEsts = [];
 async function loadEstablecimientos() {
   const el = document.getElementById('ests-list'); if(!el)return;
   try {
-    _todosEsts = await dbFetch('establecimientos?order=nombre.asc') || [];
+    _todosEsts = await dbFetch('establecimientos?order=nombre.asc&select=*') || [];
     el.innerHTML = _todosEsts.map(e => `
       <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)">
         <div style="width:36px;height:36px;background:var(--accent)22;border:1px solid var(--accent)44;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${e.protegido?'🔒':'🏪'}</div>
