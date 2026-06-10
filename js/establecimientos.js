@@ -215,9 +215,9 @@ async function showEstDetail(estId) {
       <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:6px">👥 Usuarios</div>
       <div id="ed-usuarios"></div>
     </div>`;
+  // Mostrar overlay PRIMERO para que los IDs estén en el DOM
   overlay.style.display = 'flex';
-  // est-detail sigue existiendo para compatibilidad pero está oculto
-  document.getElementById('est-detail-nombre').textContent = est.nombre;
+  // Rellenar info (ahora los elementos YA existen en el DOM)
   document.getElementById('ed-info').innerHTML = `
     ${est.direccion?`<div style="font-size:12px;margin-bottom:6px">📍 ${est.direccion}</div>`:''}
     ${est.maps_link?`<a href="${est.maps_link}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none;margin-bottom:8px;display:inline-flex">🗺 Maps</a>`:''}
@@ -225,6 +225,7 @@ async function showEstDetail(estId) {
       <div><div style="font-size:9px;color:var(--muted)">MÁX ADMINS</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent)">${est.max_admins||3}</div></div>
       <div><div style="font-size:9px;color:var(--muted)">MÁX TRAB.</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent)">${est.max_trabajadores||10}</div></div>
     </div>`;
+  try { document.getElementById('est-detail-nombre').textContent = est.nombre; } catch(e) {}
 
   // Stats fichas
   try {

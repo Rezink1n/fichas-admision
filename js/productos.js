@@ -130,8 +130,9 @@ async function generarFichas() {
   toast(`Emitiendo ${cantidad} ficha${cantidad>1?'s':''}...`,'');
   try {
     for (let i=0; i<cantidad; i++) {
+      // UID corto: 8 chars alfanuméricos (ej: A3F9K2M1)
       const uid = (cantidad===1 && customUid) ? customUid
-        : 'F-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).substr(2,4).toUpperCase();
+        : (Math.random().toString(36).substr(2,4)+Math.random().toString(36).substr(2,4)).toUpperCase();
       const body = {uid, producto_id:prodId, valor:prod.precio, estado:'emitida', producto_snapshot:productoSnap};
       if (_session?.establecimiento_id) body.establecimiento_id = _session.establecimiento_id;
       await dbFetch('fichas',{method:'POST',body:JSON.stringify(body)});
@@ -150,7 +151,7 @@ async function generarFichas() {
         ${fichasEmitidas.map(f=>`
           <div style="text-align:center;background:#fff;border-radius:6px;padding:6px;cursor:pointer" onclick="downloadQR('${f.uid}','${f.qrData}')">
             <img src="${f.qrData}" style="width:38px;height:38px;display:block">
-            <div style="font-size:6px;color:#333;margin-top:2px;width:38px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center">${f.uid.length>12?f.uid.slice(-8):f.uid}</div>
+            <div style="font-size:6px;color:#333;margin-top:2px;width:38px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center">${f.uid}</div>
           </div>`).join('')}
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -171,7 +172,7 @@ function imprimirTodasFichas() {
   const items = fichas.map(f=>`
     <div style="display:inline-block;text-align:center;margin:3mm;vertical-align:top;page-break-inside:avoid">
       <img src="${f.qrData}" style="width:10mm;height:10mm;display:block">
-      <div style="font-size:4pt;font-family:monospace;margin-top:0.5mm;width:10mm;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center">${f.uid.length>12?f.uid.slice(-8):f.uid}</div>
+      <div style="font-size:4pt;font-family:monospace;margin-top:0.5mm;width:10mm;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center">${f.uid}</div>
     </div>`).join('');
   const w = window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html><head>
@@ -188,7 +189,7 @@ function downloadQR(uid, data) { if(!data)return; const a=document.createElement
 function printQR(uid, data) {
   if(!data)return;
   const w=window.open('','_blank');
-  w.document.write(`<html><body style="text-align:center;padding:40px;font-family:monospace"><img src="${data}" style="width:220px;display:block;margin:0 auto 12px"><div style="font-size:15px;font-weight:bold">${uid.length>12?uid.slice(-8):uid}</div></body></html>`);
+  w.document.write(`<html><body style="text-align:center;padding:40px;font-family:monospace"><img src="${data}" style="width:220px;display:block;margin:0 auto 12px"><div style="font-size:15px;font-weight:bold">${uid}</div></body></html>`);
   w.document.close(); w.onload=()=>w.print();
 }
 

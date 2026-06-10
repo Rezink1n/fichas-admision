@@ -443,6 +443,7 @@ function renderPublicFicha(f, el) {
     vendida: {cls:'pb-vendida',  ico:'🎫', title:'¡Lista para usar!',     sub:'Presenta esta ficha para canjearla'},
     usada:   {cls:'pb-usada',    ico:'✅', title:'Ficha ya utilizada',     sub:'Esta ficha ya ha sido canjeada'},
     caducada:{cls:'pb-caducada', ico:'⏰', title:'Ficha caducada',         sub:'El periodo de validez ha expirado'},
+    archivo: {cls:'pb-caducada', ico:'📦', title:'Ficha archivada',        sub:'Esta ficha ha sido archivada y ya no está activa'},
   };
   const b = banners[f.estado]||banners.emitida;
   const est = f.establecimientos;

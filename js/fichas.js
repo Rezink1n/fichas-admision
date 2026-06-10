@@ -218,11 +218,8 @@ function setEstFilter(estId, btn) {
   document.querySelectorAll('.fbtn-prod').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); renderFichas(); renderProdFilters();
 }
-function setProdFilter(nombre, btn) {
-  currentProdFilter = nombre;
-  document.querySelectorAll('.fbtn-prod').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); renderFichas();
-}
+// setProdFilter reemplazado por setProdFilterAll y setProdFilterByIdx
+
 function renderProdFilters() {
   const el = document.getElementById('fichas-prod-filter-row');
   if (!el) return;
